@@ -1,6 +1,7 @@
-# Copyright (C) 2022-2023 Indoc Systems
+# Copyright (C) 2022-Present Indoc Systems
 #
-# Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE, Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
+# Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE,
+# Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
 from starlette.config import environ
@@ -12,6 +13,7 @@ environ['PROJECT_SERVICE'] = 'http://PROJECT_SERVICE'
 environ['ROOT_PATH'] = './tests/'
 environ['S3_INTERNAL'] = 'MINIO_ENDPOINT'
 environ['OPEN_TELEMETRY_ENABLED'] = 'True'
+environ['REDIS_PASSWORD'] = 'auth'
 
 pytest_plugins = [
     'tests.fixtures.services.base',

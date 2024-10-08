@@ -1,4 +1,4 @@
-FROM python:3.9.11-buster AS production-environment
+FROM docker-registry.ebrains.eu/hdc-services-image/base-image:python-3.10.12-v2 AS production-environment
 
 ENV PYTHONDONTWRITEBYTECODE=true \
     PYTHONIOENCODING=UTF-8 \
@@ -17,8 +17,6 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         build-essential
 
-WORKDIR /dataset
-
 COPY poetry.lock pyproject.toml ./
 COPY dataset ./dataset
 
@@ -26,6 +24,9 @@ RUN poetry install --no-dev --no-interaction
 
 
 FROM production-environment AS dataset-image
+
+RUN chown -R app:app /app
+USER app
 
 ENTRYPOINT ["python3", "-m", "dataset"]
 
@@ -40,6 +41,9 @@ FROM development-environment AS alembic-image
 ENV ALEMBIC_CONFIG=migrations/alembic.ini
 
 COPY migrations ./migrations
+
+RUN chown -R app:app /app
+USER app
 
 ENTRYPOINT ["python3", "-m", "alembic"]
 

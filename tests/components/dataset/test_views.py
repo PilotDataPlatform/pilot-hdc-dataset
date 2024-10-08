@@ -1,15 +1,18 @@
-# Copyright (C) 2022-2023 Indoc Systems
+# Copyright (C) 2022-Present Indoc Systems
 #
-# Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE, Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
+# Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE,
+# Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-import uuid
+import random
 from datetime import datetime
 from datetime import timedelta
 from itertools import islice
+from uuid import UUID
 
 import pytest
 
+from dataset.components import ModelList
 from dataset.components.dataset.parameters import DatasetSortByFields
 from dataset.components.sorting import SortingOrder
 
@@ -128,8 +131,8 @@ class TestDatasetViews:
         assert received_ids == ids
         assert received_total == 3
 
-    async def test_list_datasets_returns_dataset_filtered_by_project_id(self, client, jq, dataset_factory):
-        project_id = uuid.uuid4()
+    async def test_list_datasets_returns_dataset_filtered_by_project_id(self, client, jq, faker, dataset_factory):
+        project_id = faker.uuid4()
         await dataset_factory.create_with_project(project_id=project_id)
         await dataset_factory.create_with_project(project_id=project_id)
         dataset_without_project = await dataset_factory.create()
@@ -142,14 +145,16 @@ class TestDatasetViews:
         assert dataset_without_project.id not in received_ids
         assert received_total == 2
 
-    async def test_list_datasets_returns_422_when_ids_are_not_uuid(self, client, dataset_factory):
-        await dataset_factory.bulk_create(5)
-        ids = ['aaa', 'bbb']
-        response = await client.get('/v1/datasets/', query_string={'ids': ','.join(ids)})
+    @pytest.mark.parametrize('parameter', ['ids', 'project_id_any'])
+    async def test_list_datasets_returns_422_status_code_when_ids_in_parameters_are_not_uuid(
+        self, parameter, client, dataset_factory
+    ):
+        values = ['aaa', 'bbb']
+        response = await client.get('/v1/datasets/', query_string={parameter: ','.join(values)})
 
         assert response.status_code == 422
         assert response.json() == {
-            'error': [{'detail': 'badly formed hexadecimal UUID string', 'source': ['ids'], 'title': 'value_error'}]
+            'error': [{'detail': 'badly formed hexadecimal UUID string', 'source': [parameter], 'title': 'value_error'}]
         }
 
     async def test_list_datasets_returns_datasets_with_code_specified_in_code_any_parameter(
@@ -183,3 +188,84 @@ class TestDatasetViews:
 
         assert received_codes == [dataset.code]
         assert received_total == 1
+
+    async def test_list_datasets_returns_datasets_filtered_by_project_id_any_parameter(
+        self, client, jq, dataset_factory
+    ):
+        created_datasets = ModelList([await dataset_factory.create_with_project() for _ in range(3)])
+        mapping = created_datasets.map_by_field('project_id', key_type=str)
+
+        project_ids = random.sample(mapping.keys(), 2)
+        response = await client.get('/v1/datasets/', query_string={'project_id_any': ','.join(project_ids)})
+
+        body = jq(response)
+        received_project_ids = body('.result[].project_id').all()
+        received_total = body('.total').first()
+
+        assert set(received_project_ids) == set(project_ids)
+        assert received_total == 2
+
+    async def test_list_datasets_returns_datasets_filtered_by_project_id_any_parameter_even_if_only_one_matches(
+        self, client, jq, faker, dataset_factory
+    ):
+        created_datasets = ModelList([await dataset_factory.create_with_project() for _ in range(2)])
+        dataset = created_datasets.pop()
+
+        project_ids = [faker.uuid4(), faker.uuid4(), str(dataset.project_id)]
+        response = await client.get('/v1/datasets/', query_string={'project_id_any': ','.join(project_ids)})
+
+        body = jq(response)
+        received_project_ids = body('.result[].project_id').all()
+        received_total = body('.total').first()
+
+        assert received_project_ids == [str(dataset.project_id)]
+        assert received_total == 1
+
+    async def test_list_datasets_returns_dataset_filtered_by_or_creator_parameter(self, client, jq, dataset_factory):
+        created_datasets = await dataset_factory.bulk_create(2)
+        dataset = created_datasets.pop()
+
+        params = {'or_creator': dataset.creator}
+        response = await client.get('/v1/datasets/', query_string=params)
+
+        body = jq(response)
+        received_ids = body('.result[].id').all()
+        received_total = body('.total').first()
+
+        assert received_ids == [str(dataset.id)]
+        assert received_total == 1
+
+    async def test_list_datasets_returns_datasets_filtered_by_creator_and_or_creator_parameters_at_once(
+        self, client, jq, dataset_factory
+    ):
+        created_datasets = await dataset_factory.bulk_create(3)
+        dataset_1, dataset_2, _ = created_datasets
+
+        params = {'creator': dataset_1.creator, 'or_creator': dataset_2.creator}
+        response = await client.get('/v1/datasets/', query_string=params)
+
+        body = jq(response)
+        received_ids = body('.result[].id').all(to=set, each_to=UUID)
+        received_total = body('.total').first()
+
+        assert received_ids == {dataset_1.id, dataset_2.id}
+        assert received_total == 2
+
+    async def test_list_datasets_returns_datasets_filtered_by_several_parameters_and_or_creator_parameter_at_once(
+        self, client, jq, faker, dataset_factory
+    ):
+        creator_1 = faker.unique.user_name()
+        creator_2 = faker.unique.user_name()
+        creator_1_dataset, *_ = [await dataset_factory.create_with_project(creator=creator_1) for _ in range(2)]
+        creator_2_datasets = await dataset_factory.bulk_create(2, creator=creator_2)
+        creator_2_datasets_ids = creator_2_datasets.get_field_values('id')
+
+        params = {'project_id': creator_1_dataset.project_id, 'creator': creator_1, 'or_creator': creator_2}
+        response = await client.get('/v1/datasets/', query_string=params)
+
+        body = jq(response)
+        received_ids = body('.result[].id').all(to=set, each_to=UUID)
+        received_total = body('.total').first()
+
+        assert received_ids == {creator_1_dataset.id, *creator_2_datasets_ids}
+        assert received_total == 3

@@ -1,6 +1,7 @@
-# Copyright (C) 2022-2023 Indoc Systems
+# Copyright (C) 2022-Present Indoc Systems
 #
-# Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE, Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
+# Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE,
+# Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
 from urllib.parse import urlparse
@@ -13,10 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from testcontainers.postgres import PostgresContainer
 
+POSTGRES_DOCKER_IMAGE = 'postgres:14.1'
+
 
 @pytest_asyncio.fixture(scope='session')
 def db_postgres():
-    with PostgresContainer('postgres:14.1', dbname='dataset') as postgres:
+    with PostgresContainer(POSTGRES_DOCKER_IMAGE, dbname='dataset') as postgres:
         db_uri = postgres.get_connection_url()
         yield db_uri.replace(f'{urlparse(db_uri).scheme}://', 'postgresql+asyncpg://', 1)
 

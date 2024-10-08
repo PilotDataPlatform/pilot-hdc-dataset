@@ -1,6 +1,7 @@
-# Copyright (C) 2022-2023 Indoc Systems
+# Copyright (C) 2022-Present Indoc Systems
 #
-# Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE, Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
+# Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE,
+# Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
 import json
@@ -244,9 +245,9 @@ async def test_rename_top_level_folder_keeps_all_subfolders_and_files_order(
 
     file_dict_new = deepcopy(file_dict)
     file_dict_new['parent_path'] = f'new_name/{folder_lvl2_dict["name"]}/{folder_lvl3_dict["name"]}'
-    file_dict_new[
-        'location_uri'
-    ] = 'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+    file_dict_new['location_uri'] = (
+        'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+    )
     correct_file_request = {
         'parent': folder_lvl3_id,
         'parent_path': f'new_name/{folder_lvl2_dict["name"]}/{folder_lvl3_dict["name"]}',
@@ -430,9 +431,9 @@ async def test_rename_middle_level_folder_keeps_all_subfolders_and_files_order(
 
     file_dict_new = deepcopy(file_dict)
     file_dict_new['parent_path'] = f'{folder_lvl1_dict["name"]}/new_name/{folder_lvl3_dict["name"]}'
-    file_dict_new[
-        'location_uri'
-    ] = 'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+    file_dict_new['location_uri'] = (
+        'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+    )
     correct_file_request = {
         'parent': folder_lvl3_id,
         'parent_path': f'{folder_lvl1_dict["name"]}/new_name/{folder_lvl3_dict["name"]}',
@@ -597,9 +598,9 @@ async def test_rename_bottom_level_folder_keeps_all_subfolders_and_files_order(
 
     file_dict_new = deepcopy(file_dict)
     file_dict_new['parent_path'] = f'{folder_lvl1_dict["name"]}/{folder_lvl2_dict["name"]}/new_name'
-    file_dict_new[
-        'location_uri'
-    ] = 'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+    file_dict_new['location_uri'] = (
+        'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+    )
     correct_file_request = {
         'parent': folder_lvl3_id,
         'parent_path': f'{folder_lvl1_dict["name"]}/{folder_lvl2_dict["name"]}/new_name',
