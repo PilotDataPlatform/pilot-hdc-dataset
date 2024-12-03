@@ -6,13 +6,22 @@
 
 from common import configure_logging
 from fastapi import FastAPI
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from opentelemetry.sdk.resources import SERVICE_NAME
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
 
 from dataset import __version__
+from dataset.config import SRV_NAMESPACE
 from dataset.config import Settings
 from dataset.config import get_settings
 from dataset.startup import api_registry
 from dataset.startup.exception_handlers import exception_handlers
-from dataset.startup.instrument_app import initialize_instrument_app
 from dataset.startup.middlewares import middlewares
 
 
@@ -32,14 +41,10 @@ def create_app() -> FastAPI:
     setup_exception_handlers(app)
     setup_logging(settings)
     api_registry(app)
-    setup_instrument_app(app, settings)
+    setup_metrics(app, settings)
+    setup_tracing(app, settings)
 
     return app
-
-
-def setup_instrument_app(app: FastAPI, settings: Settings) -> None:
-    if settings.OPEN_TELEMETRY_ENABLED:
-        initialize_instrument_app(app, settings)
 
 
 def setup_middlewares(app: FastAPI) -> None:
@@ -60,3 +65,31 @@ def setup_logging(settings: Settings) -> None:
     """Configure the application logging."""
 
     configure_logging(settings.LOGGING_LEVEL, settings.LOGGING_FORMAT)
+
+
+def setup_metrics(app: FastAPI, settings: Settings) -> None:
+    """Instrument the application and expose endpoint for Prometheus metrics."""
+
+    if not settings.ENABLE_PROMETHEUS_METRICS:
+        return
+
+    PrometheusFastApiInstrumentator().instrument(app).expose(app, include_in_schema=False)
+
+
+def setup_tracing(app: FastAPI, settings: Settings) -> None:
+    """Instrument the application with OpenTelemetry tracing."""
+
+    if not settings.OPEN_TELEMETRY_ENABLED:
+        return
+
+    tracer_provider = TracerProvider(resource=Resource.create({SERVICE_NAME: SRV_NAMESPACE}))
+    trace.set_tracer_provider(tracer_provider)
+
+    otlp_exporter = OTLPSpanExporter(
+        endpoint=f'{settings.OPEN_TELEMETRY_HOST}:{settings.OPEN_TELEMETRY_PORT}', insecure=True
+    )
+
+    tracer_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+
+    FastAPIInstrumentor.instrument_app(app)
+    HTTPXClientInstrumentor().instrument()

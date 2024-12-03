@@ -7,9 +7,6 @@
 from datetime import datetime
 from enum import Enum
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 from uuid import UUID
 
 from pydantic import Field
@@ -51,6 +48,7 @@ class DatasetCreationSchema(BaseSchema):
     """Dataset schema with creation fields."""
 
     code: constr(regex=settings.DATASET_CODE_REGEX, strip_whitespace=True)
+    project_id: UUID
     total_files: int = 0
     size: int = 0
     source: str = ''
@@ -61,16 +59,16 @@ class DatasetUpdateSchema(BaseSchema):
     """Dataset schema with update fields."""
 
     title: constr(max_length=100)
-    authors: List[constr(max_length=50)] = Field(max_items=10)
+    authors: list[constr(max_length=50)] = Field(max_items=10)
     type: DatasetType = DatasetType.GENERAL
-    modality: List[Modality] = []
-    collection_method: List[constr(max_length=20)] = Field(max_items=10, default=[])
-    license: Optional[constr(max_length=20)] = ''
-    tags: List[constr(max_length=32)] = Field(max_items=10, default=[])
+    modality: list[Modality] = []
+    collection_method: list[constr(max_length=20)] = Field(max_items=10, default=[])
+    license: constr(max_length=20) | None = ''
+    tags: list[constr(max_length=32)] = Field(max_items=10, default=[])
     description: constr(max_length=5000)
 
     @classmethod
-    def from_schema(cls, schema_content: Dict[str, Any]) -> 'DatasetUpdateSchema':
+    def from_schema(cls, schema_content: dict[str, Any]) -> 'DatasetUpdateSchema':
         """Create an instance of DatasetUpdateSchema from SchemaDataset.content dict."""
 
         obj = {k.split('_')[1]: v for k, v in schema_content.items()}
@@ -85,7 +83,7 @@ class DatasetResponseSchema(DatasetSchema):
     """Default schema for single dataset in response."""
 
     id: UUID
-    project_id: Optional[UUID] = None
+    project_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -96,4 +94,4 @@ class DatasetResponseSchema(DatasetSchema):
 class DatasetListResponseSchema(ListResponseSchema):
     """Default schema for multiple datasets in response."""
 
-    result: List[DatasetResponseSchema]
+    result: list[DatasetResponseSchema]

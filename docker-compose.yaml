@@ -1,9 +1,8 @@
 version: "3.8"
 
 services:
-  app:
+  dataset:
     build:
-      context: .
       target: dataset-image
     logging:
       driver: "json-file"
@@ -11,7 +10,10 @@ services:
         max-size: "10m"
         max-file: "5"
     ports:
-      - "127.0.0.1:5077:5077"
+      - "127.0.0.1:5081:5081"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5081
     depends_on:
       - postgres
     env_file:
@@ -38,7 +40,6 @@ services:
 
   alembic:
     build:
-      context: .
       target: alembic-image
     env_file:
       - '.env'
@@ -49,5 +50,22 @@ services:
       postgres:
         condition: service_healthy
 
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    ports:
+      - "127.0.0.1:9091:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./metrics/prometheus.yaml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+
 volumes:
   postgres-data:
+  prometheus-data:
+  grafana-data:

@@ -67,15 +67,15 @@ repos:
           '--max-line-length=120',
         ]
 
-#  - repo: https://github.com/PyCQA/docformatter
-#    rev: v1.7.5
-#    hooks:
-#      - id: docformatter
-#        args: [
-#          '--wrap-summaries=120',
-#          '--wrap-descriptions=120',
-#          '--in-place',
-#        ]
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.5
+    hooks:
+      - id: docformatter
+        args: [
+          '--wrap-summaries=120',
+          '--wrap-descriptions=120',
+          '--in-place',
+        ]
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
@@ -86,3 +86,10 @@ repos:
           '--license-filepath=COPYRIGHT',
           '--comment-style=#',
         ]
+
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.7.3
+    hooks:
+      - id: pip-audit
+        files: \.lock$
+        entry: bash -c 'pip-audit -r <(poetry export -f requirements.txt --with dev)'

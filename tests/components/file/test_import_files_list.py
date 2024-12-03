@@ -106,7 +106,7 @@ async def test_import_files_from_source_list_should_return_200(
 
 
 async def test_import_files_from_different_project_return_403(client, dataset_factory):
-    dataset = await dataset_factory.create_with_project()
+    dataset = await dataset_factory.create()
     dataset_id = str(dataset.id)
     payload = {
         'source_list': [],

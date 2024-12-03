@@ -52,18 +52,19 @@ async def test_create_dataset_long_title_should_return_422(client, jq, faker, mi
 
 @mock.patch.object(DatasetActivityLog, 'send_dataset_on_create_event')
 async def test_create_dataset_should_return_200(
-    mock_dataset_activity_log, client, dataset_crud, minio_container, minio_client, s3_test_client, jq
+    mock_dataset_activity_log, client, dataset_factory, dataset_crud, minio_container, minio_client, s3_test_client, jq
 ):
-    payload = {
-        'creator': 'amyguindoc14',
-        'title': '123',
-        'authors': ['123'],
-        'type': 'GENERAL',
-        'description': '123',
-        'code': 'datasetcode',
-        'tags': ['{!@#$%^&*()_{}:\\?><'],
-        'modality': ['anatomical approach'],
-    }
+    dataset = dataset_factory.generate(
+        creator='amyguindoc14',
+        title='123',
+        authors=['123'],
+        type_='GENERAL',
+        description='123',
+        code='datasetcode',
+        tags=['{!@#$%^&*()_{}:\\?><'],
+        modality=['anatomical approach'],
+    )
+    payload = dataset.to_payload()
     response = await client.post('/v1/datasets/', json=payload)
     assert response.status_code == 200
     body = jq(response)
@@ -85,6 +86,7 @@ async def test_duplicated_dataset_code_should_return_409(client, dataset_factory
         'type': 'GENERAL',
         'description': '123',
         'code': dataset.code,
+        'project_id': str(dataset.project_id),
     }
     res = await client.post('/v1/datasets/', json=payload)
     assert res.status_code == 409

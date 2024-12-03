@@ -7,8 +7,8 @@
 from io import BytesIO
 
 from aiokafka import AIOKafkaProducer
+from aiokafka.errors import KafkaConnectionError
 from aiokafka.errors import KafkaError
-from kafka.errors import KafkaConnectionError
 
 from dataset.config import get_settings
 from dataset.logger import logger

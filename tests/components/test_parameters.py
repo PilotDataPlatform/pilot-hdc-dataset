@@ -32,10 +32,9 @@ class TestSortParameters:
 
         sort_parameters_class = SortParameters.with_sort_by_fields(CustomSortByFields)
 
-        signature = inspect.signature(sort_parameters_class)
-        sort_by_field = signature.parameters['sort_by']
+        annotations = inspect.get_annotations(sort_parameters_class)
 
-        assert sort_by_field.annotation is CustomSortByFields
+        assert annotations['sort_by'] == CustomSortByFields | None
 
     def test_with_sort_by_fields_does_not_override_original_class_type_annotation_for_sort_by_field(self):
         class CustomSortByFields(SortByFields):
@@ -43,7 +42,6 @@ class TestSortParameters:
 
         SortParameters.with_sort_by_fields(CustomSortByFields)
 
-        signature = inspect.signature(SortParameters)
-        sort_by_field = signature.parameters['sort_by']
+        annotations = inspect.get_annotations(SortParameters)
 
-        assert sort_by_field.annotation is str
+        assert annotations['sort_by'] == str | None

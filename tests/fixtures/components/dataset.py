@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import List
 from uuid import UUID
 
 import pytest
@@ -26,18 +25,22 @@ class DatasetFactory(BaseFactory):
         self,
         *,
         code: str = ...,
+        project_id: UUID = ...,
         creator: str = ...,
         title: str = ...,
-        authors: List[str] = ...,
-        modality: List[str] = ...,
-        collection_method: List[str] = ...,
-        tags: List[str] = ...,
+        authors: list[str] = ...,
+        modality: list[str] = ...,
+        collection_method: list[str] = ...,
+        tags: list[str] = ...,
         description: str = ...,
         type_: str = ...,
         license_: str = ...,
     ) -> DatasetSchema:
         if code is ...:
             code = self.fake.pystr_format('?#' * 10).lower()
+
+        if project_id is ...:
+            project_id = self.fake.uuid4(cast_to=None)
 
         if creator is ...:
             creator = self.fake.unique.user_name()
@@ -70,6 +73,7 @@ class DatasetFactory(BaseFactory):
             creator=creator,
             title=title,
             code=code,
+            project_id=project_id,
             authors=authors,
             type=type_,
             modality=modality,
@@ -83,12 +87,13 @@ class DatasetFactory(BaseFactory):
         self,
         *,
         code: str = ...,
+        project_id: UUID = ...,
         creator: str = ...,
         title: str = ...,
-        authors: List[str] = ...,
-        modality: List[str] = ...,
-        collection_method: List[str] = ...,
-        tags: List[str] = ...,
+        authors: list[str] = ...,
+        modality: list[str] = ...,
+        collection_method: list[str] = ...,
+        tags: list[str] = ...,
         description: str = ...,
         type_: str = ...,
         license_: str = ...,
@@ -96,6 +101,7 @@ class DatasetFactory(BaseFactory):
     ) -> Dataset:
         entry = self.generate(
             code=code,
+            project_id=project_id,
             creator=creator,
             title=title,
             authors=authors,
@@ -109,40 +115,6 @@ class DatasetFactory(BaseFactory):
         async with self.crud:
             return await self.crud.create(entry, **kwds)
 
-    async def create_with_project(
-        self,
-        *,
-        project_id: UUID = ...,
-        code: str = ...,
-        creator: str = ...,
-        title: str = ...,
-        authors: List[str] = ...,
-        modality: List[str] = ...,
-        collection_method: List[str] = ...,
-        tags: List[str] = ...,
-        description: str = ...,
-        type_: str = ...,
-        license_: str = ...,
-        **kwds: Any,
-    ) -> Dataset:
-        if project_id is ...:
-            project_id = self.fake.uuid4(cast_to=None)
-
-        return await self.create(
-            code=code,
-            creator=creator,
-            title=title,
-            authors=authors,
-            modality=modality,
-            collection_method=collection_method,
-            tags=tags,
-            description=description,
-            type_=type_,
-            license_=license_,
-            project_id=project_id,
-            **kwds,
-        )
-
     async def bulk_create(
         self,
         number: int,
@@ -150,10 +122,10 @@ class DatasetFactory(BaseFactory):
         code: str = ...,
         creator: str = ...,
         title: str = ...,
-        authors: List[str] = ...,
-        modality: List[str] = ...,
-        collection_method: List[str] = ...,
-        tags: List[str] = ...,
+        authors: list[str] = ...,
+        modality: list[str] = ...,
+        collection_method: list[str] = ...,
+        tags: list[str] = ...,
         description: str = ...,
         type_: str = ...,
         license_: str = ...,
@@ -162,43 +134,6 @@ class DatasetFactory(BaseFactory):
         return ModelList(
             [
                 await self.create(
-                    code=code,
-                    creator=creator,
-                    title=title,
-                    authors=authors,
-                    modality=modality,
-                    collection_method=collection_method,
-                    tags=tags,
-                    description=description,
-                    type_=type_,
-                    license_=license_,
-                    **kwds,
-                )
-                for _ in range(number)
-            ]
-        )
-
-    async def bulk_create_with_project(
-        self,
-        number: int,
-        *,
-        project_id: UUID = ...,
-        code: str = ...,
-        creator: str = ...,
-        title: str = ...,
-        authors: List[str] = ...,
-        modality: List[str] = ...,
-        collection_method: List[str] = ...,
-        tags: List[str] = ...,
-        description: str = ...,
-        type_: str = ...,
-        license_: str = ...,
-        **kwds: Any,
-    ) -> ModelList[Dataset]:
-        return ModelList(
-            [
-                await self.create_with_project(
-                    project_id=project_id,
                     code=code,
                     creator=creator,
                     title=title,

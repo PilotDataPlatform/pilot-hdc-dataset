@@ -7,7 +7,6 @@
 import logging
 from functools import lru_cache
 from typing import Any
-from typing import Dict
 
 from common import VaultClient
 from pydantic import BaseSettings
@@ -21,7 +20,7 @@ CONFIG_CENTER_ENABLED = config('CONFIG_CENTER_ENABLED', cast=str, default='false
 CONFIG_CENTER_BASE_URL = config('CONFIG_CENTER_BASE_URL', cast=str, default='NOT_SET')
 
 
-def load_vault_settings(settings: BaseSettings) -> Dict[str, Any]:
+def load_vault_settings(settings: BaseSettings) -> dict[str, Any]:
     if CONFIG_CENTER_ENABLED == 'false':
         return {}
     else:
@@ -92,6 +91,8 @@ class Settings(BaseSettings):
     OPEN_TELEMETRY_ENABLED: bool = False
     OPEN_TELEMETRY_HOST: str = '127.0.0.1'
     OPEN_TELEMETRY_PORT: int = 6831
+
+    ENABLE_PROMETHEUS_METRICS: bool = False
 
     class Config:
         env_file = '.env'

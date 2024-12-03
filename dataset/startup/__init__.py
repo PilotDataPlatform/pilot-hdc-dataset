@@ -5,6 +5,7 @@
 # You may not use this file except in compliance with the License.
 
 from .api_registry import api_registry
-from .instrument_app import initialize_instrument_app
 
-__all__ = ('initialize_instrument_app', 'api_registry')
+__all__ = [
+    'api_registry',
+]

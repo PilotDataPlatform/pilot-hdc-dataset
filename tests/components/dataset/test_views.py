@@ -133,16 +133,16 @@ class TestDatasetViews:
 
     async def test_list_datasets_returns_dataset_filtered_by_project_id(self, client, jq, faker, dataset_factory):
         project_id = faker.uuid4()
-        await dataset_factory.create_with_project(project_id=project_id)
-        await dataset_factory.create_with_project(project_id=project_id)
-        dataset_without_project = await dataset_factory.create()
+        await dataset_factory.create(project_id=project_id)
+        await dataset_factory.create(project_id=project_id)
+        dataset_with_another_project = await dataset_factory.create()
 
         response = await client.get('/v1/datasets/', query_string={'project_id': str(project_id)})
         body = jq(response)
         received_ids = body('.result[].id').all()
         received_total = body('.total').first()
 
-        assert dataset_without_project.id not in received_ids
+        assert dataset_with_another_project.id not in received_ids
         assert received_total == 2
 
     @pytest.mark.parametrize('parameter', ['ids', 'project_id_any'])
@@ -192,7 +192,7 @@ class TestDatasetViews:
     async def test_list_datasets_returns_datasets_filtered_by_project_id_any_parameter(
         self, client, jq, dataset_factory
     ):
-        created_datasets = ModelList([await dataset_factory.create_with_project() for _ in range(3)])
+        created_datasets = ModelList([await dataset_factory.create() for _ in range(3)])
         mapping = created_datasets.map_by_field('project_id', key_type=str)
 
         project_ids = random.sample(mapping.keys(), 2)
@@ -208,7 +208,7 @@ class TestDatasetViews:
     async def test_list_datasets_returns_datasets_filtered_by_project_id_any_parameter_even_if_only_one_matches(
         self, client, jq, faker, dataset_factory
     ):
-        created_datasets = ModelList([await dataset_factory.create_with_project() for _ in range(2)])
+        created_datasets = ModelList([await dataset_factory.create() for _ in range(2)])
         dataset = created_datasets.pop()
 
         project_ids = [faker.uuid4(), faker.uuid4(), str(dataset.project_id)]
@@ -256,7 +256,7 @@ class TestDatasetViews:
     ):
         creator_1 = faker.unique.user_name()
         creator_2 = faker.unique.user_name()
-        creator_1_dataset, *_ = [await dataset_factory.create_with_project(creator=creator_1) for _ in range(2)]
+        creator_1_dataset, *_ = [await dataset_factory.create(creator=creator_1) for _ in range(2)]
         creator_2_datasets = await dataset_factory.bulk_create(2, creator=creator_2)
         creator_2_datasets_ids = creator_2_datasets.get_field_values('id')
 
