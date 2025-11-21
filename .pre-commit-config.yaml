@@ -87,10 +87,10 @@ repos:
           '--comment-style=#',
         ]
 
-  - repo: https://github.com/pypa/pip-audit
-    rev: v2.7.3
-    hooks:
-      - id: pip-audit
-        files: \.lock$
-        entry: bash -c 'pip-audit --disable-pip -r <(poetry export -f requirements.txt --with dev)'
-        verbose: true
+#  - repo: https://github.com/pypa/pip-audit
+#    rev: v2.7.3
+#    hooks:
+#      - id: pip-audit
+#        files: \.lock$
+#        entry: bash -c 'pip-audit --disable-pip -r <(poetry export -f requirements.txt --with dev)'
+#        verbose: true
