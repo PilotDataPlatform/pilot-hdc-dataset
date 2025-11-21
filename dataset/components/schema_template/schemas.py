@@ -6,9 +6,6 @@
 
 from datetime import datetime
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 from uuid import UUID
 
 from pydantic import Field
@@ -21,7 +18,7 @@ class SchemaTemplateSchema(BaseSchema):
 
     name: str
     is_draft: bool
-    content: Dict[str, Any]
+    content: dict[str, Any]
 
 
 class SchemaTemplateCreateSchema(SchemaTemplateSchema):
@@ -30,7 +27,7 @@ class SchemaTemplateCreateSchema(SchemaTemplateSchema):
     standard: str
     system_defined: bool
     creator: str
-    dataset_id: Optional[UUID] = None
+    dataset_id: UUID | None = None
 
 
 class SchemaTemplateResponse(SchemaTemplateSchema):
@@ -40,7 +37,7 @@ class SchemaTemplateResponse(SchemaTemplateSchema):
     standard: str
     system_defined: bool
     creator: str
-    dataset_id: Optional[UUID] = None
+    dataset_id: UUID | None = None
     create_timestamp: datetime
     update_timestamp: datetime
 
@@ -71,4 +68,4 @@ class LegacySchemaTemplateItemListResponse(BaseSchema):
 class LegacySchemaTemplateListResponse(BaseSchema):
     """Legacy schema for multiple schema templates in response."""
 
-    result: List[LegacySchemaTemplateItemListResponse]
+    result: list[LegacySchemaTemplateItemListResponse]

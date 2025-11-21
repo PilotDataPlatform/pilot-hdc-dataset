@@ -4,6 +4,7 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
+from collections.abc import AsyncGenerator
 from typing import Any
 
 import pytest
@@ -13,10 +14,10 @@ from dataset.components.models import ModelList
 from dataset.components.schema.crud import SchemaCRUD
 from dataset.components.schema.models import SchemaDataset
 from dataset.components.schema.schemas import POSTSchema
-from tests.fixtures.components._base_factory import BaseFactory
+from tests.fixtures.components import CRUDFactory
 
 
-class SchemaFactory(BaseFactory):
+class SchemaFactory(CRUDFactory):
     """Create schema related entries for testing purposes."""
 
     def generate(
@@ -80,12 +81,11 @@ class SchemaFactory(BaseFactory):
         entry = self.generate(
             name, dataset_id, schema_template_id, standard, system_defined, is_draft, content, creator
         )
-        async with self.crud:
-            return await self.crud.create(entry, **kwds)
+
+        return await self.crud.create(entry, **kwds)
 
     async def create_essentials(self, dataset: Dataset) -> SchemaDataset:
-        async with self.crud:
-            return await self.crud.create_essentials(dataset)
+        return await self.crud.create_essentials(dataset)
 
     async def bulk_create(
         self,
@@ -104,13 +104,13 @@ class SchemaFactory(BaseFactory):
             [
                 await self.create(
                     name,
-                    creator,
+                    dataset_id,
+                    schema_template_id,
                     standard,
                     system_defined,
                     is_draft,
                     content,
-                    dataset_id,
-                    schema_template_id,
+                    creator,
                     **kwds,
                 )
                 for _ in range(number)
@@ -120,9 +120,11 @@ class SchemaFactory(BaseFactory):
 
 @pytest.fixture
 def schema_crud(db_session) -> SchemaCRUD:
-    yield SchemaCRUD(db_session)
+    return SchemaCRUD(db_session)
 
 
 @pytest.fixture
-def schema_factory(faker, schema_crud) -> SchemaFactory:
-    yield SchemaFactory(faker, schema_crud)
+async def schema_factory(fake, schema_crud) -> AsyncGenerator[SchemaFactory]:
+    schema_factory = SchemaFactory(schema_crud, fake)
+    yield schema_factory
+    await schema_factory.truncate_table()

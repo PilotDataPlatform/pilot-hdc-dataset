@@ -4,11 +4,7 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-import pytest
-
 from dataset.components.bids_result.schemas import BIDSResultResponseSchema
-
-pytestmark = pytest.mark.asyncio
 
 
 async def test_dataset_verify_pre_should_return_200_and_response_from_queue_service(

@@ -19,7 +19,7 @@ async def test_instance_has_uninitialized_instance_attribute_after_creation(get_
     assert get_db_engine.instance is None
 
 
-async def test_call_returns_an_instance_of_async_engine(get_db_engine):
-    db_engine = await get_db_engine()
+async def test_call_returns_an_instance_of_async_engine(get_db_engine, settings):
+    db_engine = await get_db_engine(settings=settings)
     assert db_engine is get_db_engine.instance
     assert isinstance(db_engine, AsyncEngine)

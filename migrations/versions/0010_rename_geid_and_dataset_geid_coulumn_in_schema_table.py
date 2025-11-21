@@ -3,8 +3,7 @@
 # Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE,
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
-
-"""rename geid and dataset geid coulumn in schema table.
+"""Rename geid and dataset geid coulumn in schema table.
 
 Revision ID: 0010
 Revises: 0009

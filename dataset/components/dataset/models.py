@@ -43,7 +43,7 @@ class Dataset(DBModel):
     total_files = Column(INTEGER())
     title = Column(VARCHAR(length=256), nullable=False)
     creator = Column(VARCHAR(length=256), index=True, nullable=False)
-    project_id = Column(UUID(as_uuid=True))
+    project_id = Column(UUID(as_uuid=True), nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), default=func.now(), index=True, nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
 

@@ -14,8 +14,6 @@ from dataset.components.file.activity_log import FileActivityLogService
 from dataset.components.file.schemas import ItemStatusSchema
 from dataset.components.object_storage.s3 import S3Client
 
-pytestmark = pytest.mark.asyncio
-
 
 @pytest.fixture
 async def background_task_requests(httpx_mock):
@@ -672,7 +670,7 @@ async def test_move_subfolder_to_dataset_root_should_create_file_with_correct_da
                 'name': 'sub1',
                 'owner': 'admin',
                 'status': 'ACTIVE',
-                'container_code': 'l6n6g0i4s8i7w6g4n7z5',
+                'container_code': dataset.code,
                 'container_type': 'dataset',
                 'zone': 1,
             }

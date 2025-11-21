@@ -3,8 +3,7 @@
 # Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE,
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
-
-"""add system defined schema templates.
+"""Add system defined schema templates.
 
 Revision ID: 0005
 Revises: 0004
@@ -399,25 +398,21 @@ def upgrade():
         if not found:
             json_content = json.dumps(template['content'])
             op.execute(
-                (
-                    'INSERT INTO schema_template ('
-                    'geid, name, standard, system_defined, '
-                    'is_draft, content, creator, '
-                    'create_timestamp, update_timestamp)'
-                    f"VALUES ('{str(uuid4())}', '{template['name']}', "
-                    f"'{template['standard']}', {template['system_defined']}, "
-                    f"{template['is_draft']}, '{json_content}', "
-                    f"'{template['creator']}', now(), now())"
-                )
+                'INSERT INTO schema_template ('
+                'geid, name, standard, system_defined, '
+                'is_draft, content, creator, '
+                'create_timestamp, update_timestamp)'
+                f"VALUES ('{str(uuid4())}', '{template['name']}', "
+                f"'{template['standard']}', {template['system_defined']}, "
+                f"{template['is_draft']}, '{json_content}', "
+                f"'{template['creator']}', now(), now())"
             )
 
 
 def downgrade():
     op.execute(
-        (
-            'DELETE FROM schema_template '
-            'WHERE name IN ('
-            "'Distribution', 'Open_minds', 'Disease', "
-            "'Contributors', 'Subjects', 'Grant', 'Essential')"
-        )
+        'DELETE FROM schema_template '
+        'WHERE name IN ('
+        "'Distribution', 'Open_minds', 'Disease', "
+        "'Contributors', 'Subjects', 'Grant', 'Essential')"
     )

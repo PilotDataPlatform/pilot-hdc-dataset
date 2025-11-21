@@ -4,8 +4,10 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
+from dataset.components.dataset.models import Dataset
 from dataset.components.dataset.views import router as dataset_router
 
 __all__ = [
+    'Dataset',
     'dataset_router',
 ]

@@ -17,7 +17,6 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
 
 from dataset import __version__
-from dataset.config import SRV_NAMESPACE
 from dataset.config import Settings
 from dataset.config import get_settings
 from dataset.startup import api_registry
@@ -82,7 +81,7 @@ def setup_tracing(app: FastAPI, settings: Settings) -> None:
     if not settings.OPEN_TELEMETRY_ENABLED:
         return
 
-    tracer_provider = TracerProvider(resource=Resource.create({SERVICE_NAME: SRV_NAMESPACE}))
+    tracer_provider = TracerProvider(resource=Resource.create({SERVICE_NAME: settings.APP_NAME}))
     trace.set_tracer_provider(tracer_provider)
 
     otlp_exporter = OTLPSpanExporter(

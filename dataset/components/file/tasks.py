@@ -5,15 +5,13 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Tuple
 
 from fastapi import Depends
 
 from dataset.components.dataset.crud import DatasetCRUD
 from dataset.components.dataset.models import Dataset
 from dataset.components.file.activity_log import FileActivityLogService
+from dataset.components.file.activity_log import get_file_activity_log_service
 from dataset.components.file.crud import FileCRUD
 from dataset.components.file.dependencies import get_file_crud
 from dataset.components.file.dependencies import get_locking_manager
@@ -40,7 +38,7 @@ class FileOperationTasks:
         folder_crud: FolderCRUD = Depends(get_folder_crud),
         locking_manager: LockingManager = Depends(get_locking_manager),
         task_stream_service: TaskStreamService = Depends(),
-        file_act_notifier: FileActivityLogService = Depends(),
+        file_act_notifier: FileActivityLogService = Depends(get_file_activity_log_service),
     ):
         self.file_crud = file_crud
         self.folder_crud = folder_crud
@@ -50,14 +48,14 @@ class FileOperationTasks:
 
     async def recursive_copy(
         self,
-        current_nodes: List[Dict[str, Any]],
+        current_nodes: list[dict[str, Any]],
         dataset: Dataset,
         oper: str,
         current_root_path: str,
-        parent_node: Dict[str, Any],
-        job_tracker: Dict[str, Any] = None,
+        parent_node: dict[str, Any],
+        job_tracker: dict[str, Any] = None,
         new_name: str = None,
-    ) -> Tuple[int, int, List[Dict[str, Any]]]:
+    ) -> tuple[int, int, list[dict[str, Any]]]:
         """Recursively adds all children from a specific parent to a dataset."""
 
         num_of_files = 0
@@ -133,8 +131,8 @@ class FileOperationTasks:
         return num_of_files, total_file_size, new_lv1_nodes
 
     async def recursive_delete(
-        self, current_nodes: List[Dict[str, Any]], dataset: Dataset, oper: str, job_tracker: Dict[str, Any] = None
-    ) -> Tuple[int, int]:
+        self, current_nodes: list[dict[str, Any]], dataset: Dataset, oper: str, job_tracker: dict[str, Any] = None
+    ) -> tuple[int, int]:
         """Recursively deletes all children from a specific parent from a dataset."""
 
         num_of_files = 0
@@ -189,10 +187,9 @@ class FileOperationTasks:
     async def copy_files_worker(
         self,
         dataset_crud: DatasetCRUD,
-        import_list: List[Dict[str, Any]],
+        import_list: list[dict[str, Any]],
         dataset: Dataset,
         oper: str,
-        source_project_id: str,
         project_code: str,
         session_id: str,
     ) -> None:
@@ -216,9 +213,9 @@ class FileOperationTasks:
             update_attribute = {
                 'total_files': dataset.total_files + num_of_files,
                 'size': dataset.size + total_file_size,
-                'project_id': source_project_id,
             }
             await dataset_crud.update(dataset.id, BaseSchema(), **update_attribute)
+            await dataset_crud.commit()
             logger.info(f'dataset {dataset.code}: {num_of_files} files added, old total {dataset.total_files}')
 
             await self.file_act_notifier.send_on_import_event(dataset.code, project_code, import_list, oper)
@@ -241,10 +238,10 @@ class FileOperationTasks:
 
     async def move_file_worker(  # noqa: C901
         self,
-        move_list: List[Dict[str, Any]],
+        move_list: list[dict[str, Any]],
         dataset: Dataset,
         oper: str,
-        target_folder: Dict[str, Any],
+        target_folder: dict[str, Any],
         session_id: str,
     ) -> None:
         """Background task responsible to copy files/folders to new parents and remove from the old ones."""
@@ -315,7 +312,7 @@ class FileOperationTasks:
         return
 
     async def delete_files_work(
-        self, dataset_crud: DatasetCRUD, delete_list: List[Dict[str, Any]], dataset: Dataset, oper: str, session_id: str
+        self, dataset_crud: DatasetCRUD, delete_list: list[dict[str, Any]], dataset: Dataset, oper: str, session_id: str
     ) -> None:
         """Background task responsible to remove list of files/folders from dataset."""
         deleted_files = []
@@ -356,6 +353,7 @@ class FileOperationTasks:
                 'size': total_size if total_size > 0 else 0,
             }
             await dataset_crud.update(dataset.id, BaseSchema(), **update_attribute)
+            await dataset_crud.commit()
             logger.info(f'dataset {dataset.code} : {num_of_files} files removed, old total {dataset.total_files}')
             await self.file_act_notifier.send_on_delete_event(dataset.code, delete_list, oper)
 
@@ -379,7 +377,7 @@ class FileOperationTasks:
         return
 
     async def rename_file_worker(
-        self, old_file: Dict[str, Any], new_name: str, dataset: Dataset, oper: str, session_id: str
+        self, old_file: dict[str, Any], new_name: str, dataset: Dataset, oper: str, session_id: str
     ) -> None:
         """Background task responsible to copy file/folder to with new name and remove the old one."""
 

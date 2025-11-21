@@ -14,9 +14,6 @@ from dataset.components.activity_log.schemas import ActivitySchema
 from dataset.components.exceptions import NotFound
 from dataset.components.schema.activity_log import SchemaDatasetActivityLogService
 from dataset.components.schema.schemas import SchemaResponse
-from dataset.config import get_settings
-
-pytestmark = pytest.mark.asyncio
 
 
 async def test_schema_without_template_should_return_404(client, dataset_factory):
@@ -144,8 +141,11 @@ async def test_update_schema_should_reflect_change_and_return_200(
 
 @mock.patch.object(SchemaDatasetActivityLogService, 'send_schema_update_event')
 async def test_update_essential_schema_should_reflect_change_and_return_200(
-    mock_activity_log, client, schema_factory, dataset_factory
+    mock_activity_log, client, schema_factory, schema_template_factory, dataset_factory, settings
 ):
+    await schema_template_factory.truncate_table()
+    await schema_template_factory.create(name=settings.ESSENTIALS_TEMPLATE_NAME, system_defined=True, dataset_id=None)
+
     dataset = await dataset_factory.create()
     essential_schema = await schema_factory.create_essentials(dataset)
     schema_id = str(essential_schema.id)
@@ -168,8 +168,11 @@ async def test_update_essential_schema_should_reflect_change_and_return_200(
 
 
 async def test_update_essential_schema_should_have_required_all_fields_return_422(
-    client, schema_factory, dataset_factory
+    client, schema_factory, schema_template_factory, dataset_factory, settings
 ):
+    await schema_template_factory.truncate_table()
+    await schema_template_factory.create(name=settings.ESSENTIALS_TEMPLATE_NAME, system_defined=True, dataset_id=None)
+
     dataset = await dataset_factory.create()
     essential_schema = await schema_factory.create_essentials(dataset)
     schema_id = str(essential_schema.id)
@@ -199,7 +202,7 @@ async def test_delete_schema_should_return_200(
         'dataset_geid': dataset_id,
         'activity': [],
     }
-    res = await client.delete(f'/v1/schema/{schema_id}', json=payload)
+    res = await client.request('DELETE', f'/v1/schema/{schema_id}', json=payload)
     assert res.status_code == 204
     with pytest.raises(NotFound):
         await schema_crud.retrieve_by_id(schema.id)
@@ -207,9 +210,11 @@ async def test_delete_schema_should_return_200(
 
 
 async def test_list_schema_should_bring_essential_schema_first(
-    client, dataset_factory, schema_template_factory, schema_factory
+    client, dataset_factory, schema_template_factory, schema_factory, settings
 ):
-    settings = get_settings()
+    await schema_template_factory.truncate_table()
+    await schema_template_factory.create(name=settings.ESSENTIALS_TEMPLATE_NAME, system_defined=True, dataset_id=None)
+
     dataset = await dataset_factory.create()
     dataset_id = str(dataset.id)
     essential_schema = await schema_factory.create_essentials(dataset)

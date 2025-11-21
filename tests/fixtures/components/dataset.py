@@ -4,6 +4,7 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
+from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
 
@@ -15,10 +16,10 @@ from dataset.components.dataset.models import Dataset
 from dataset.components.dataset.schemas import DatasetSchema
 from dataset.components.dataset.schemas import DatasetType
 from dataset.components.dataset.schemas import Modality
-from tests.fixtures.components._base_factory import BaseFactory
+from tests.fixtures.components import CRUDFactory
 
 
-class DatasetFactory(BaseFactory):
+class DatasetFactory(CRUDFactory):
     """Create dataset related entries for testing purposes."""
 
     def generate(  # noqa: C901
@@ -112,8 +113,8 @@ class DatasetFactory(BaseFactory):
             type_=type_,
             license_=license_,
         )
-        async with self.crud:
-            return await self.crud.create(entry, **kwds)
+
+        return await self.crud.create(entry, **kwds)
 
     async def bulk_create(
         self,
@@ -153,9 +154,11 @@ class DatasetFactory(BaseFactory):
 
 @pytest.fixture
 def dataset_crud(db_session) -> DatasetCRUD:
-    yield DatasetCRUD(db_session)
+    return DatasetCRUD(db_session)
 
 
 @pytest.fixture
-def dataset_factory(faker, dataset_crud) -> DatasetFactory:
-    yield DatasetFactory(faker, dataset_crud)
+async def dataset_factory(fake, dataset_crud) -> AsyncGenerator[DatasetFactory]:
+    dataset_factory = DatasetFactory(dataset_crud, fake)
+    yield dataset_factory
+    await dataset_factory.truncate_table()

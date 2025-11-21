@@ -6,11 +6,7 @@
 
 from uuid import uuid4
 
-import pytest
-
 from dataset.components.file.schemas import ItemStatusSchema
-
-pytestmark = pytest.mark.asyncio
 
 
 async def test_get_dataset_files_should_return_404_when_dataset_not_found(client):

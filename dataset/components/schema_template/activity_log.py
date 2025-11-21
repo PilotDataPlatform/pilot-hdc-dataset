@@ -4,10 +4,14 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
+from fastapi import Depends
+
 from dataset.components.activity_log.dataset_activity_log import BaseDatasetActivityLog
 from dataset.components.activity_log.schemas import DatasetActivityLogSchema
 from dataset.components.dataset.models import Dataset
 from dataset.components.schema_template.models import SchemaTemplate
+from dataset.dependencies.kafka import KafkaProducerClient
+from dataset.dependencies.kafka import get_kafka_client
 
 
 class SchemaTemplateActivityLogService(BaseDatasetActivityLog):
@@ -34,3 +38,11 @@ class SchemaTemplateActivityLogService(BaseDatasetActivityLog):
             target_name=schema_template.name,
         )
         return await self._message_send(log_schema.dict())
+
+
+def get_schema_template_activity_log_service(
+    kafka_producer_client: KafkaProducerClient = Depends(get_kafka_client),
+) -> SchemaTemplateActivityLogService:
+    """Return an instance of SchemaTemplateActivityLogService as a dependency."""
+
+    return SchemaTemplateActivityLogService(kafka_producer_client=kafka_producer_client)

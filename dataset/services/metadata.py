@@ -6,8 +6,6 @@
 
 import asyncio
 from typing import Any
-from typing import Dict
-from typing import List
 
 import httpx
 from fastapi import HTTPException
@@ -29,8 +27,8 @@ class MetadataService(BaseService):
     SEARCH_URL = f'{BASE_URL}/v1/items/search/'
 
     async def get_objects(
-        self, code: str, items_type: str = 'dataset', extra: Dict[str, Any] = None
-    ) -> List[Dict[str, Any]]:
+        self, code: str, items_type: str = 'dataset', extra: dict[str, Any] = None
+    ) -> list[dict[str, Any]]:
         """List items by container_code."""
         page = 0
         params = {
@@ -57,7 +55,7 @@ class MetadataService(BaseService):
                     objects_list.extend(response['result'])
         return objects_list
 
-    async def get_by_id(self, id_: str) -> Dict[str, Any]:
+    async def get_by_id(self, id_: str) -> dict[str, Any]:
         """Get item by id in medatadata service."""
 
         url = f'{self.ITEM_URL}{id_}/'
@@ -69,7 +67,7 @@ class MetadataService(BaseService):
                     raise NotFound()
             raise exc
 
-    async def create_object(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_object(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Creates item in medatadata service."""
 
         payload.update({'zone': 1})
@@ -87,7 +85,7 @@ class MetadataService(BaseService):
         item = response['result']
         return item
 
-    async def update_object(self, payload: Dict[str, Any]) -> None:
+    async def update_object(self, payload: dict[str, Any]) -> None:
         """Updates item in metadata service."""
         try:
             logger.info(f'Metadata update request: {self.ITEM_URL}', extra={'payload': payload})
@@ -109,7 +107,7 @@ class MetadataService(BaseService):
                 raise HTTPException(status_code=exc.response.status_code, detail=exc.response.json()) from exc
             raise exc
 
-    async def get_files(self, code: str) -> List[Dict[str, Any]]:
+    async def get_files(self, code: str) -> list[dict[str, Any]]:
         """Return all files from dataset."""
         return await self.get_objects(code, extra={'type': 'file'})
 

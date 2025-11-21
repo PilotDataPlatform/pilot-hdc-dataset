@@ -3,8 +3,7 @@
 # Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE,
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
-
-"""add name dataset_id unique to schema model.
+"""Add name dataset_id unique to schema model.
 
 Revision ID: 0011
 Revises: 0010

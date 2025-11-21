@@ -9,8 +9,9 @@ import os
 import shutil
 import time
 from datetime import datetime
+from uuid import UUID
 
-from aioredis import StrictRedis
+from redis.asyncio import StrictRedis
 from sqlalchemy.future import select
 from starlette.concurrency import run_in_threadpool
 
@@ -30,7 +31,7 @@ from dataset.services.metadata import MetadataService
 settings = get_settings()
 
 
-class VersionPublisher(object):
+class VersionPublisher:
     """Class that runs in background, creating the zip in minio and a new version in the database."""
 
     TMP_BASE = '/tmp/'
@@ -104,12 +105,13 @@ class VersionPublisher(object):
             with open(self.tmp_folder + '/openMINDS_' + schema.name, 'w') as w:
                 w.write(json.dumps(schema.content, indent=4, ensure_ascii=False))
 
-    async def publish(self, dataset_code: str, dataset_id: str, version_data: VersionCreateSchema):
+    async def publish(self, dataset_code: str, dataset_id: UUID, version_data: VersionCreateSchema) -> None:
         """Background job that creates the zip all files and create the dataset version."""
+
         await self._update_status('inprogress')
         self.zip_path = f'{self.TMP_BASE}{dataset_code}_{str(datetime.now())}'
+        locked_node = []
         try:
-            # lock file here
             level1_nodes = await self.folder_crud.get_children(dataset_code, None)
             locked_node, err = await self.locking_manager.recursive_lock_publish(level1_nodes)
             if err:
@@ -129,22 +131,22 @@ class VersionPublisher(object):
                 location=minio_location,
             )
             dataset_version = await self.version_crud.create(version_schema)
+            await self.version_crud.commit()
 
-            logger.info(f'Successfully published {dataset_id} version {version_data.version}')
             await self.activity_log.send_publish_version_succeed(dataset_version)
             await self._update_status('success')
-        except Exception as e:
-            error_msg = f'Error publishing {dataset_id}: {str(e)}'
+            logger.info(f'Successfully published {dataset_id} version {version_data.version}')
+        except Exception:
+            error_msg = f'Error publishing {dataset_id}'
             logger.exception(error_msg)
             await self._update_status('failed', error_msg=error_msg)
         finally:
-            # unlock the nodes if we got blocked
             for resource_key, operation in locked_node:
                 await self.locking_manager.unlock_resource(resource_key, operation)
-        return
 
     async def _download_dataset_files(self):
         """Download files from minio."""
+
         file_paths = []
         for file in self.dataset_files:
             location_data = self._parse_minio_location(file['storage']['location_uri'])
@@ -152,19 +154,28 @@ class VersionPublisher(object):
                 location_data['bucket'], location_data['path'], self.tmp_folder + '/' + location_data['path']
             )
             file_paths.append(self.tmp_folder + '/' + location_data['path'])
+
+        logger.info(f'{len(file_paths)} files downloaded to {self.tmp_folder}')
+
         return file_paths
 
     def _zip_files(self):
         """Create zip file."""
+
         shutil.make_archive(self.zip_path, 'zip', self.tmp_folder)
+        logger.info(f'Zip file "{self.zip_path}" created')
+
         return self.zip_path
 
     async def _upload_version(self, dataset_code: str):
         """Upload version zip to minio."""
+
         bucket = dataset_code
         file_path = 'versions/' + self.zip_path.split('/')[-1] + '.zip'
         with open(f'{self.zip_path}.zip', mode='rb') as file:
             await self.s3_client.upload_file(bucket, file_path, file)
+
+        logger.info(f'Zip file "{file_path}" uploaded to bucket "{bucket}"')
 
         minio_http = ('https://' if settings.S3_INTERNAL_HTTPS else 'http://') + settings.S3_INTERNAL
         minio_location = f'minio://{minio_http}/{bucket}/{file_path}'

@@ -5,16 +5,18 @@
 # You may not use this file except in compliance with the License.
 
 from enum import Enum
-from typing import List
 
 
 class StrEnum(str, Enum):
     """Enum where members suppose to be strings."""
+
+    def __str__(self) -> str:
+        return self.value
 
     @property
     def value(self) -> str:
         return self._value_
 
     @classmethod
-    def values(cls) -> List[str]:
+    def values(cls) -> list[str]:
         return [field.value for field in cls]

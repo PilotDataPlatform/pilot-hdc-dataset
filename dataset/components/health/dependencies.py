@@ -9,14 +9,16 @@ from fastapi import Depends
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dataset.config import Settings
+from dataset.config import get_settings
 from dataset.dependencies import get_db_session
 from dataset.dependencies.kafka import get_kafka_client
 from dataset.logger import logger
 
 
-async def is_kafka_connected() -> bool:
+async def is_kafka_connected(settings: Settings = Depends(get_settings)) -> bool:
     try:
-        await get_kafka_client()
+        await get_kafka_client(settings)
         return True
     except KafkaConnectionError:
         logger.exception('Kafka connection error')

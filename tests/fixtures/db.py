@@ -4,49 +4,55 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from urllib.parse import urlparse
+import os
+from collections.abc import AsyncIterator
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import Path
 
-import pytest_asyncio
-from alembic.command import downgrade
+import pytest
 from alembic.command import upgrade
 from alembic.config import Config
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-POSTGRES_DOCKER_IMAGE = 'postgres:14.1'
 
-
-@pytest_asyncio.fixture(scope='session')
-def db_postgres():
-    with PostgresContainer(POSTGRES_DOCKER_IMAGE, dbname='dataset') as postgres:
-        db_uri = postgres.get_connection_url()
-        yield db_uri.replace(f'{urlparse(db_uri).scheme}://', 'postgresql+asyncpg://', 1)
-
-
-@pytest_asyncio.fixture()
-async def create_db(db_postgres):
-    engine = create_async_engine(db_postgres)
-    config = Config('./migrations/alembic.ini')
-    upgrade(config, 'head')
-    yield engine
-    downgrade(config, 'base')
-    await engine.dispose()
-
-
-@pytest_asyncio.fixture()
-async def db_session(create_db):
+@contextmanager
+def chdir(directory: Path) -> Iterator[None]:
+    cwd = os.getcwd()
     try:
-        session = AsyncSession(
-            create_db,
-            expire_on_commit=False,
-        )
+        os.chdir(directory)
+        yield
+    finally:
+        os.chdir(cwd)
+
+
+@pytest.fixture(scope='session')
+def db_uri(get_service_image, project_root) -> Iterator[str]:
+    postgres_image = get_service_image('postgres')
+
+    with PostgresContainer(postgres_image, dbname='dataset') as postgres:
+        database_uri = postgres.get_connection_url()
+
+        config = Config('migrations/alembic.ini')
+        with chdir(project_root):
+            config.set_main_option('database_uri', database_uri)
+            upgrade(config, 'head')
+
+        yield database_uri.replace('+psycopg2', '+asyncpg')
+
+
+@pytest.fixture(scope='session')
+def db_engine(db_uri) -> AsyncEngine:
+    return create_async_engine(db_uri)
+
+
+@pytest.fixture
+async def db_session(db_engine) -> AsyncIterator[AsyncSession]:
+    session = AsyncSession(bind=db_engine, expire_on_commit=False)
+    try:
         yield session
-        await session.commit()
     finally:
         await session.close()
-
-
-@pytest_asyncio.fixture()
-def test_db(db_session):
-    yield db_session

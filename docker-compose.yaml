@@ -20,7 +20,7 @@ services:
       - '.env'
 
   postgres:
-    image: postgres:14.1-alpine
+    image: docker-registry.ebrains.eu/hdc-services-external/postgres:14.1
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -44,8 +44,8 @@ services:
     env_file:
       - '.env'
     volumes:
-      - ./migrations/:/dataset/migrations/
-      - ./dataset/:/dataset/dataset/
+      - ./migrations/:/app/migrations/
+      - ./dataset/:/app/dataset/
     depends_on:
       postgres:
         condition: service_healthy

@@ -4,12 +4,14 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import List
+from fastapi import Depends
 
 from dataset.components.activity_log.dataset_activity_log import BaseDatasetActivityLog
 from dataset.components.activity_log.schemas import ActivitySchema
 from dataset.components.activity_log.schemas import DatasetActivityLogSchema
 from dataset.components.schema.models import SchemaDataset
+from dataset.dependencies.kafka import KafkaProducerClient
+from dataset.dependencies.kafka import get_kafka_client
 
 
 class SchemaDatasetActivityLogService(BaseDatasetActivityLog):
@@ -23,7 +25,7 @@ class SchemaDatasetActivityLogService(BaseDatasetActivityLog):
         )
         return await self._message_send(log_schema.dict())
 
-    async def send_schema_update_event(self, schema: SchemaDataset, username: str, changes: List[ActivitySchema]):
+    async def send_schema_update_event(self, schema: SchemaDataset, username: str, changes: list[ActivitySchema]):
         """Anounce schema updated."""
 
         log_schema = DatasetActivityLogSchema(
@@ -45,3 +47,11 @@ class SchemaDatasetActivityLogService(BaseDatasetActivityLog):
             target_name=schema.name,
         )
         return await self._message_send(log_schema.dict())
+
+
+def get_schema_dataset_activity_log_service(
+    kafka_producer_client: KafkaProducerClient = Depends(get_kafka_client),
+) -> SchemaDatasetActivityLogService:
+    """Return an instance of SchemaDatasetActivityLogService as a dependency."""
+
+    return SchemaDatasetActivityLogService(kafka_producer_client=kafka_producer_client)

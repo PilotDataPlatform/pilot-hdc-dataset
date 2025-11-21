@@ -3,8 +3,7 @@
 # Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE,
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
-
-"""add relation between versions table and datasets table.
+"""Add relation between versions table and datasets table.
 
 Revision ID: 0008
 Revises: 0007

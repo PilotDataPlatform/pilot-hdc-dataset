@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import Dict
 
 import httpx
 from fastapi import Request
@@ -26,7 +25,7 @@ class BaseService:
             raise Unauthorized()
         return token
 
-    async def get(self, url: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get(self, url: str, params: dict[str, Any] = None) -> dict[str, Any]:
         """Retrieve request for service."""
         async with httpx.AsyncClient() as client:
             response = await client.get(url, params=params, headers={'Authorization': self._get_authorization_token()})
@@ -34,7 +33,7 @@ class BaseService:
 
         return response.json()
 
-    async def create(self, url: str, payload: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def create(self, url: str, payload: dict[str, Any] = None) -> dict[str, Any]:
         """Create request for service."""
         async with httpx.AsyncClient() as client:
             response = await client.post(url, json=payload, headers={'Authorization': self._get_authorization_token()})
@@ -42,7 +41,7 @@ class BaseService:
 
         return response.json()
 
-    async def update(self, url: str, payload: Dict[str, Any] = None, params: Dict[str, Any] = None) -> None:
+    async def update(self, url: str, payload: dict[str, Any] = None, params: dict[str, Any] = None) -> None:
         """Update request for service."""
         async with httpx.AsyncClient() as client:
             response = await client.put(
@@ -50,7 +49,7 @@ class BaseService:
             )
         response.raise_for_status()
 
-    async def delete(self, url: str, params: Dict[str, Any] = None) -> None:
+    async def delete(self, url: str, params: dict[str, Any] = None) -> None:
         """Delete request for service."""
         async with httpx.AsyncClient() as client:
             response = await client.delete(

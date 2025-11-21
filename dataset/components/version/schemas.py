@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from datetime import datetime
-from typing import List
 from uuid import UUID
 
 from pydantic import constr
@@ -39,6 +38,7 @@ class VersionSchema(BaseSchema):
 class VersionResponseSchema(VersionSchema):
     """General schema for single version response."""
 
+    id: UUID
     created_at: datetime
 
     class Config:
@@ -48,4 +48,4 @@ class VersionResponseSchema(VersionSchema):
 class VersionListResponseSchema(ListResponseSchema):
     """Legacy schema for multiple versions in response."""
 
-    result: List[VersionResponseSchema]
+    result: list[VersionResponseSchema]

@@ -13,9 +13,9 @@ from dataset.components.parameters import SortParameters
 
 
 class TestPageParameters:
-    def test_to_pagination_returns_instance_of_pagination_with_the_same_page_arguments(self, faker):
-        page = faker.pyint()
-        page_size = faker.pyint()
+    def test_to_pagination_returns_instance_of_pagination_with_the_same_page_arguments(self, fake):
+        page = fake.pyint()
+        page_size = fake.pyint()
         page_parameters = PageParameters(page=page, page_size=page_size)
 
         pagination = page_parameters.to_pagination()

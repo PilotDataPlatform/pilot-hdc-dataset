@@ -4,8 +4,6 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import List
-from typing import Union
 from uuid import UUID
 
 from sqlalchemy import select
@@ -27,7 +25,7 @@ class SchemaTemplateCRUD(CRUD):
         """Return base select including join with Dataset model."""
         return select(self.model).outerjoin(Dataset).options(contains_eager(self.model.dataset))
 
-    async def get_template_by_dataset_or_system_defined(self, dataset_id: Union[UUID, str]) -> List[SchemaTemplate]:
+    async def get_template_by_dataset_or_system_defined(self, dataset_id: UUID | str) -> list[SchemaTemplate]:
         if isinstance(dataset_id, UUID):
             statement = select(self.model).where(self.model.dataset_id == dataset_id)
         else:

@@ -7,7 +7,6 @@
 import io
 from uuid import UUID
 
-import pytest
 from fastavro import schema as avro_schema
 from fastavro import schemaless_reader
 
@@ -16,18 +15,9 @@ from dataset.components.file.activity_log import FileActivityLogService
 from dataset.components.file.schemas import ItemStatusSchema
 from dataset.components.folder.activity_log import FolderActivityLog
 from dataset.components.folder.schemas import FolderResponseSchema
-from dataset.config import get_settings
-
-pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture(autouse=True)
-def kafka(monkeypatch, kafka_url):
-    settings = get_settings()
-    monkeypatch.setattr(settings, 'KAFKA_URL', kafka_url)
-
-
-async def test_send_on_import_event_send_correct_msg(kafka_file_folder_consumer):
+async def test_send_on_import_event_send_correct_msg(kafka_producer_client, kafka_file_folder_consumer):
     item = {
         'id': 'ded5bf1e-80f5-4b39-bbfd-f7c74054f41d',
         'parent_path': 'test_folder_6',
@@ -41,7 +31,9 @@ async def test_send_on_import_event_send_correct_msg(kafka_file_folder_consumer)
     item_list = [item]
     user = 'user'
 
-    await FileActivityLogService().send_on_import_event('testdataset202201101', 'source_project_code', item_list, user)
+    await FileActivityLogService(kafka_producer_client=kafka_producer_client).send_on_import_event(
+        'testdataset202201101', 'source_project_code', item_list, user
+    )
 
     msg = await kafka_file_folder_consumer.getone()
 
@@ -64,7 +56,7 @@ async def test_send_on_import_event_send_correct_msg(kafka_file_folder_consumer)
     assert activity_log_schema.changes == activity_log['changes']
 
 
-async def test_send_on_delete_event_send_correct_msg(kafka_file_folder_consumer):
+async def test_send_on_delete_event_send_correct_msg(kafka_producer_client, kafka_file_folder_consumer):
     item = {
         'id': 'ded5bf1e-80f5-4b39-bbfd-f7c74054f41d',
         'parent': 'c4cd9114-358b-4f63-a63f-43767eaecfd9',
@@ -82,7 +74,9 @@ async def test_send_on_delete_event_send_correct_msg(kafka_file_folder_consumer)
     }
     item_list = [item]
     user = 'user'
-    await FileActivityLogService().send_on_delete_event('testdataset202201101', item_list, user)
+    await FileActivityLogService(kafka_producer_client=kafka_producer_client).send_on_delete_event(
+        'testdataset202201101', item_list, user
+    )
 
     msg = await kafka_file_folder_consumer.getone()
 
@@ -105,7 +99,7 @@ async def test_send_on_delete_event_send_correct_msg(kafka_file_folder_consumer)
     assert activity_log_schema.changes == activity_log['changes']
 
 
-async def test_send_on_move_event_send_correct_msg(kafka_file_folder_consumer):
+async def test_send_on_move_event_send_correct_msg(kafka_producer_client, kafka_file_folder_consumer):
     item = {
         'id': 'ded5bf1e-80f5-4b39-bbfd-f7c74054f41d',
         'parent_path': 'test_folder_6',
@@ -117,7 +111,9 @@ async def test_send_on_move_event_send_correct_msg(kafka_file_folder_consumer):
         'container_type': 'dataset',
     }
     user = 'user'
-    await FileActivityLogService().send_on_move_event('testdataset202201101', item, user, '', 'folder1')
+    await FileActivityLogService(kafka_producer_client=kafka_producer_client).send_on_move_event(
+        'testdataset202201101', item, user, '', 'folder1'
+    )
 
     msg = await kafka_file_folder_consumer.getone()
 
@@ -140,7 +136,7 @@ async def test_send_on_move_event_send_correct_msg(kafka_file_folder_consumer):
     assert activity_log_schema.changes == [{'item_property': 'parent_path', 'old_value': '', 'new_value': 'folder1'}]
 
 
-async def test_send_on_rename_event_send_correct_msg(kafka_file_folder_consumer):
+async def test_send_on_rename_event_send_correct_msg(kafka_producer_client, kafka_file_folder_consumer):
     item = {
         'id': 'ded5bf1e-80f5-4b39-bbfd-f7c74054f41d',
         'parent_path': 'test_folder_6',
@@ -153,7 +149,9 @@ async def test_send_on_rename_event_send_correct_msg(kafka_file_folder_consumer)
     }
     item_list = [item]
     user = 'user'
-    await FileActivityLogService().send_on_rename_event('testdataset202201101', item_list, user, 'file2.txt')
+    await FileActivityLogService(kafka_producer_client=kafka_producer_client).send_on_rename_event(
+        'testdataset202201101', item_list, user, 'file2.txt'
+    )
 
     msg = await kafka_file_folder_consumer.getone()
 
@@ -178,7 +176,7 @@ async def test_send_on_rename_event_send_correct_msg(kafka_file_folder_consumer)
     ]
 
 
-async def test_send_create_folder_event_send_correct_msg(kafka_file_folder_consumer):
+async def test_send_create_folder_event_send_correct_msg(kafka_producer_client, kafka_file_folder_consumer):
     folder = FolderResponseSchema(
         **{
             'id': 'ded5bf1e-80f5-4b39-bbfd-f7c74054f41d',
@@ -198,7 +196,7 @@ async def test_send_create_folder_event_send_correct_msg(kafka_file_folder_consu
     )
 
     user = 'user'
-    await FolderActivityLog().send_create_folder_event(folder, user)
+    await FolderActivityLog(kafka_producer_client=kafka_producer_client).send_create_folder_event(folder, user)
 
     msg = await kafka_file_folder_consumer.getone()
     schema_loaded = avro_schema.load_schema('dataset/components/activity_log/metadata.items.activity.avsc')

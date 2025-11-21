@@ -73,7 +73,7 @@ class TestDatasetViews:
             field_values = [key.strftime('%Y-%m-%dT%H:%M:%S') for key in field_values]
         expected_values = sorted(field_values, reverse=sort_order == SortingOrder.DESC)
 
-        response = await client.get('/v1/datasets/', query_string={'sort_by': sort_by, 'sort_order': sort_order})
+        response = await client.get('/v1/datasets/', params={'sort_by': sort_by, 'sort_order': sort_order})
 
         body = jq(response)
         received_values = body(f'.result[].{sort_by}').all()
@@ -89,7 +89,7 @@ class TestDatasetViews:
         created_datasets = await dataset_factory.bulk_create(3)
         dataset = created_datasets.pop()
 
-        response = await client.get('/v1/datasets/', query_string={parameter: getattr(dataset, parameter)})
+        response = await client.get('/v1/datasets/', params={parameter: getattr(dataset, parameter)})
         body = jq(response)
         received_ids = body('.result[].id').all()
         received_total = body('.total').first()
@@ -98,20 +98,20 @@ class TestDatasetViews:
         assert received_total == 1
 
     async def test_list_datasets_returns_datasets_filtered_by_created_at_start_and_created_at_end_parameters(
-        self, client, jq, faker, dataset_factory
+        self, client, jq, fake, dataset_factory
     ):
         today = datetime.now()
         week_ago = today - timedelta(days=7)
         two_weeks_ago = today - timedelta(days=14)
 
-        [await dataset_factory.create(created_at=faker.date_between_dates(two_weeks_ago, week_ago)) for _ in range(2)]
-        dataset = await dataset_factory.create(created_at=faker.date_time_between_dates(week_ago, today))
+        [await dataset_factory.create(created_at=fake.date_between_dates(two_weeks_ago, week_ago)) for _ in range(2)]
+        dataset = await dataset_factory.create(created_at=fake.date_time_between_dates(week_ago, today))
 
         params = {
             'created_at_start': int(datetime.timestamp(week_ago)),
             'created_at_end': int(datetime.timestamp(today)),
         }
-        response = await client.get('/v1/datasets/', query_string=params)
+        response = await client.get('/v1/datasets/', params=params)
 
         body = jq(response)
         received_ids = body('.result[].id').all()
@@ -123,7 +123,7 @@ class TestDatasetViews:
     async def test_list_datasets_returns_dataset_filtered_by_ids(self, client, jq, dataset_factory):
         created_datasets = await dataset_factory.bulk_create(5)
         ids = [str(dataset.id) for dataset in created_datasets][:-2]
-        response = await client.get('/v1/datasets/', query_string={'ids': ','.join(ids)})
+        response = await client.get('/v1/datasets/', params={'ids': ','.join(ids)})
         body = jq(response)
         received_ids = body('.result[].id').all()
         received_total = body('.total').first()
@@ -131,13 +131,13 @@ class TestDatasetViews:
         assert received_ids == ids
         assert received_total == 3
 
-    async def test_list_datasets_returns_dataset_filtered_by_project_id(self, client, jq, faker, dataset_factory):
-        project_id = faker.uuid4()
+    async def test_list_datasets_returns_dataset_filtered_by_project_id(self, client, jq, fake, dataset_factory):
+        project_id = fake.uuid4()
         await dataset_factory.create(project_id=project_id)
         await dataset_factory.create(project_id=project_id)
         dataset_with_another_project = await dataset_factory.create()
 
-        response = await client.get('/v1/datasets/', query_string={'project_id': str(project_id)})
+        response = await client.get('/v1/datasets/', params={'project_id': str(project_id)})
         body = jq(response)
         received_ids = body('.result[].id').all()
         received_total = body('.total').first()
@@ -150,7 +150,7 @@ class TestDatasetViews:
         self, parameter, client, dataset_factory
     ):
         values = ['aaa', 'bbb']
-        response = await client.get('/v1/datasets/', query_string={parameter: ','.join(values)})
+        response = await client.get('/v1/datasets/', params={parameter: ','.join(values)})
 
         assert response.status_code == 422
         assert response.json() == {
@@ -164,7 +164,7 @@ class TestDatasetViews:
         mapping = created_datasets.map_by_field('code')
 
         dataset_codes = [str(i) for i in islice(mapping.keys(), 2)]
-        response = await client.get('/v1/datasets/', query_string={'code_any': ','.join(dataset_codes)})
+        response = await client.get('/v1/datasets/', params={'code_any': ','.join(dataset_codes)})
 
         body = jq(response)
         received_codes = body('.result[].code').all()
@@ -174,13 +174,13 @@ class TestDatasetViews:
         assert received_total == 2
 
     async def test_list_datasets_returns_datasets_with_code_specified_in_code_any_parameter_even_if_only_one_matches(
-        self, client, jq, faker, dataset_factory
+        self, client, jq, fake, dataset_factory
     ):
         created_datasets = await dataset_factory.bulk_create(2)
         dataset = created_datasets.pop()
 
-        dataset_codes = [faker.pystr(), faker.pystr(), dataset.code]
-        response = await client.get('/v1/datasets/', query_string={'code_any': ','.join(dataset_codes)})
+        dataset_codes = [fake.pystr(), fake.pystr(), dataset.code]
+        response = await client.get('/v1/datasets/', params={'code_any': ','.join(dataset_codes)})
 
         body = jq(response)
         received_codes = body('.result[].code').all()
@@ -196,7 +196,7 @@ class TestDatasetViews:
         mapping = created_datasets.map_by_field('project_id', key_type=str)
 
         project_ids = random.sample(mapping.keys(), 2)
-        response = await client.get('/v1/datasets/', query_string={'project_id_any': ','.join(project_ids)})
+        response = await client.get('/v1/datasets/', params={'project_id_any': ','.join(project_ids)})
 
         body = jq(response)
         received_project_ids = body('.result[].project_id').all()
@@ -206,13 +206,13 @@ class TestDatasetViews:
         assert received_total == 2
 
     async def test_list_datasets_returns_datasets_filtered_by_project_id_any_parameter_even_if_only_one_matches(
-        self, client, jq, faker, dataset_factory
+        self, client, jq, fake, dataset_factory
     ):
         created_datasets = ModelList([await dataset_factory.create() for _ in range(2)])
         dataset = created_datasets.pop()
 
-        project_ids = [faker.uuid4(), faker.uuid4(), str(dataset.project_id)]
-        response = await client.get('/v1/datasets/', query_string={'project_id_any': ','.join(project_ids)})
+        project_ids = [fake.uuid4(), fake.uuid4(), str(dataset.project_id)]
+        response = await client.get('/v1/datasets/', params={'project_id_any': ','.join(project_ids)})
 
         body = jq(response)
         received_project_ids = body('.result[].project_id').all()
@@ -226,7 +226,7 @@ class TestDatasetViews:
         dataset = created_datasets.pop()
 
         params = {'or_creator': dataset.creator}
-        response = await client.get('/v1/datasets/', query_string=params)
+        response = await client.get('/v1/datasets/', params=params)
 
         body = jq(response)
         received_ids = body('.result[].id').all()
@@ -242,7 +242,7 @@ class TestDatasetViews:
         dataset_1, dataset_2, _ = created_datasets
 
         params = {'creator': dataset_1.creator, 'or_creator': dataset_2.creator}
-        response = await client.get('/v1/datasets/', query_string=params)
+        response = await client.get('/v1/datasets/', params=params)
 
         body = jq(response)
         received_ids = body('.result[].id').all(to=set, each_to=UUID)
@@ -252,16 +252,16 @@ class TestDatasetViews:
         assert received_total == 2
 
     async def test_list_datasets_returns_datasets_filtered_by_several_parameters_and_or_creator_parameter_at_once(
-        self, client, jq, faker, dataset_factory
+        self, client, jq, fake, dataset_factory
     ):
-        creator_1 = faker.unique.user_name()
-        creator_2 = faker.unique.user_name()
+        creator_1 = fake.unique.user_name()
+        creator_2 = fake.unique.user_name()
         creator_1_dataset, *_ = [await dataset_factory.create(creator=creator_1) for _ in range(2)]
         creator_2_datasets = await dataset_factory.bulk_create(2, creator=creator_2)
         creator_2_datasets_ids = creator_2_datasets.get_field_values('id')
 
         params = {'project_id': creator_1_dataset.project_id, 'creator': creator_1, 'or_creator': creator_2}
-        response = await client.get('/v1/datasets/', query_string=params)
+        response = await client.get('/v1/datasets/', params=params)
 
         body = jq(response)
         received_ids = body('.result[].id').all(to=set, each_to=UUID)

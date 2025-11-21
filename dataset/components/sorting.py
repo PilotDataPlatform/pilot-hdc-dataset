@@ -4,15 +4,12 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import Optional
-from typing import Type
-
 from pydantic import BaseModel
 from sqlalchemy import asc
 from sqlalchemy import desc
 from sqlalchemy.sql import Select
 
-from dataset.components import DBModel
+from dataset.components.db_model import DBModel
 from dataset.components.types import StrEnum
 
 
@@ -26,7 +23,7 @@ class SortingOrder(StrEnum):
 class Sorting(BaseModel):
     """Base sorting control parameters."""
 
-    field: Optional[str] = None
+    field: str | None = None
     order: SortingOrder
 
     def __bool__(self) -> bool:
@@ -34,7 +31,7 @@ class Sorting(BaseModel):
 
         return self.field is not None
 
-    def apply(self, statement: Select, model: Type[DBModel]) -> Select:
+    def apply(self, statement: Select, model: type[DBModel]) -> Select:
         """Return statement with applied ordering."""
 
         field = getattr(model, self.field)

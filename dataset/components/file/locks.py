@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import Optional
 
 import httpx
 from fastapi import HTTPException
@@ -57,8 +56,8 @@ class LockingManager:
 
     async def recursive_lock_import(  # noqa: C901
         self, dataset_code, nodes, root_path
-    ) -> tuple[list[Any], Optional[Exception]]:
-        """the function will recursively lock the node tree OR unlock the tree base on the parameter.
+    ) -> tuple[list[Any], Exception | None]:
+        """The function will recursively lock the node tree OR unlock the tree base on the parameter.
 
         - if lock = true then perform the lock
         - if lock = false then perform the unlock
@@ -70,7 +69,7 @@ class LockingManager:
         locked_node, err = [], None
 
         async def recur_walker(current_nodes, current_root_path, new_name=None) -> None:
-            """recursively trace down the node tree and run the lock function."""
+            """Recursively trace down the node tree and run the lock function."""
             for ff_object in current_nodes:
                 # update here if the folder/file is archieved then skip
                 if ff_object['status'] == ItemStatusSchema.ARCHIVED.name:
@@ -92,11 +91,11 @@ class LockingManager:
                                 parent_path = parent_path.split('/', 1)[1]
                             except IndexError:
                                 pass
-                            minio_obj_path = '%s/%s' % (parent_path, ff_object.get('name'))
+                            minio_obj_path = f'{parent_path}/{ff_object.get("name")}'
                         else:
-                            minio_obj_path = '%s' % ff_object.get('name')
+                            minio_obj_path = f'{ff_object.get("name")}'
                     # source is from project
-                    source_key = '{}/{}'.format(bucket, minio_obj_path)
+                    source_key = f'{bucket}/{minio_obj_path}'
                     await self.lock_resource(source_key, 'read')
                     locked_node.append((source_key, 'read'))
 
@@ -126,7 +125,7 @@ class LockingManager:
 
         return locked_node, err
 
-    async def recursive_lock_delete(self, nodes) -> tuple[list[Any], Optional[Exception]]:  # noqa: C901
+    async def recursive_lock_delete(self, nodes) -> tuple[list[Any], Exception | None]:  # noqa: C901
         """Recursively lock resources to be deleted."""
         # this is for crash recovery, if something trigger the exception
         # we will unlock the locked node only. NOT the whole tree. The example
@@ -135,7 +134,7 @@ class LockingManager:
         locked_node, err = [], None
 
         async def recur_walker(current_nodes) -> None:
-            """recursively trace down the node tree and run the lock function."""
+            """Recursively trace down the node tree and run the lock function."""
             for ff_object in current_nodes:
                 # update here if the folder/file is archieved then skip
                 if ff_object['status'] == ItemStatusSchema.ARCHIVED.name:
@@ -152,17 +151,17 @@ class LockingManager:
                     else:
                         bucket = ff_object.get('container_code')
                         parent_path = ff_object.get('parent_path')
-                        minio_obj_path = '%s/' % settings.DATASET_FILE_FOLDER
+                        minio_obj_path = f'{settings.DATASET_FILE_FOLDER}/'
                         if parent_path:
                             try:
                                 parent_path = parent_path.split('/', 1)[1]
                             except IndexError:
                                 pass
-                            minio_obj_path += '%s/%s' % (parent_path, ff_object.get('name'))
+                            minio_obj_path += f'{parent_path}/{ff_object.get("name")}'
                         else:
-                            minio_obj_path += '%s' % ff_object.get('name')
+                            minio_obj_path += f'{ff_object.get("name")}'
 
-                    source_key = '{}/{}'.format(bucket, minio_obj_path)
+                    source_key = f'{bucket}/{minio_obj_path}'
                     await self.lock_resource(source_key, 'write')
                     locked_node.append((source_key, 'write'))
 
@@ -185,7 +184,7 @@ class LockingManager:
 
     async def recursive_lock_move_rename(  # noqa: C901
         self, nodes, root_path, new_name=None
-    ) -> tuple[list[Any], Optional[Exception]]:
+    ) -> tuple[list[Any], Exception | None]:
         """Recursively lock resource to be renamed."""
         # this is for crash recovery, if something trigger the exception
         # we will unlock the locked node only. NOT the whole tree. The example
@@ -195,7 +194,7 @@ class LockingManager:
 
         # TODO lock
         async def recur_walker(current_nodes, current_root_path, new_name=None) -> None:
-            """recursively trace down the node tree and run the lock function."""
+            """Recursively trace down the node tree and run the lock function."""
             for ff_object in current_nodes:
                 # update here if the folder/file is archieved then skip
                 if ff_object['status'] == ItemStatusSchema.ARCHIVED.name:
@@ -213,27 +212,19 @@ class LockingManager:
                         bucket = ff_object.get('container_code')
                         if ff_object['parent_path']:
                             parent_path = ff_object['parent_path']
-                            minio_obj_path = '%s/%s/%s' % (
-                                settings.DATASET_FILE_FOLDER,
-                                parent_path,
-                                ff_object.get('name'),
-                            )
+                            minio_obj_path = f'{settings.DATASET_FILE_FOLDER}/{parent_path}/{ff_object.get("name")}'
                         else:
-                            minio_obj_path = '%s/%s' % (settings.DATASET_FILE_FOLDER, ff_object.get('name'))
-                    source_key = '{}/{}'.format(bucket, minio_obj_path)
+                            minio_obj_path = f'{settings.DATASET_FILE_FOLDER}/{ff_object.get("name")}'
+                    source_key = f'{bucket}/{minio_obj_path}'
                     await self.lock_resource(source_key, 'write')
                     locked_node.append((source_key, 'write'))
 
                     if current_root_path == settings.DATASET_FILE_FOLDER:
-                        target_key = '{}/{}/{}'.format(
-                            bucket, current_root_path, new_name if new_name else ff_object.get('name')
-                        )
+                        target_key = f'{bucket}/{current_root_path}/{new_name if new_name else ff_object.get("name")}'
                     else:
-                        target_key = '{}/{}/{}/{}'.format(
-                            bucket,
-                            settings.DATASET_FILE_FOLDER,
-                            current_root_path,
-                            new_name if new_name else ff_object.get('name'),
+                        target_key = (
+                            f'{bucket}/{settings.DATASET_FILE_FOLDER}/{current_root_path}/'
+                            f'{new_name if new_name else ff_object.get("name")}'
                         )
                     await self.lock_resource(target_key, 'write')
                     locked_node.append((target_key, 'write'))
@@ -264,7 +255,7 @@ class LockingManager:
 
         return locked_node, err
 
-    async def recursive_lock_publish(self, nodes) -> tuple[list[Any], Optional[Exception]]:
+    async def recursive_lock_publish(self, nodes) -> tuple[list[Any], Exception | None]:
         """Recursively lock resource to be published."""
 
         # this is for crash recovery, if something trigger the exception
@@ -274,7 +265,7 @@ class LockingManager:
         locked_node, err = [], None
 
         async def recur_walker(current_nodes) -> None:
-            """recursively trace down the node tree and run the lock function."""
+            """Recursively trace down the node tree and run the lock function."""
             for ff_object in current_nodes:
                 # update here if the folder/file is archieved then skip
                 if ff_object['status'] == ItemStatusSchema.ARCHIVED.name:
@@ -290,9 +281,9 @@ class LockingManager:
                         _, bucket, minio_obj_path = tuple(minio_path.split('/', 2))
                     else:
                         bucket = ff_object.get('container_code')
-                        minio_obj_path = '%s/%s' % (settings.DATASET_FILE_FOLDER, ff_object.get('name'))
+                        minio_obj_path = f'{settings.DATASET_FILE_FOLDER}/{ff_object.get("name")}'
 
-                    source_key = '{}/{}'.format(bucket, minio_obj_path)
+                    source_key = f'{bucket}/{minio_obj_path}'
                     await self.lock_resource(source_key, 'read')
                     locked_node.append((source_key, 'read'))
 

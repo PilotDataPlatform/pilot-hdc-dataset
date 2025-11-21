@@ -5,9 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Tuple
 
 from dataset.components.exceptions import AlreadyExists
 from dataset.components.folder.schemas import FolderCreateSchema
@@ -24,11 +21,11 @@ class FolderCRUD:
         self.s3_client = s3_client
         self.metadata_service = metadata_service
 
-    async def _create(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _create(self, data: dict[str, Any]) -> dict[str, Any]:
         """Send folder data to Metadata Service."""
         return await self.metadata_service.create_object(data)
 
-    async def get_new_parent_metadata(self, parent_id: str) -> Tuple[str, str]:
+    async def get_new_parent_metadata(self, parent_id: str) -> tuple[str, str]:
         """Get new parent_path and parent_id."""
 
         new_parent_path = None
@@ -63,12 +60,12 @@ class FolderCRUD:
 
     async def import_folder(
         self,
-        parent_id: Dict[str, Any],
+        parent_id: dict[str, Any],
         parent_path: str,
         owner: str,
         name: str,
         dataset_code: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Add a folder to dataset from import task."""
 
         folder_data = FolderMetadataCreateSchema(
@@ -80,7 +77,7 @@ class FolderCRUD:
         )
         return await self._create(folder_data.dict())
 
-    async def get_children(self, code: str, father_id: str, items_type: str = 'dataset') -> List[Dict[str, Any]]:
+    async def get_children(self, code: str, father_id: str, items_type: str = 'dataset') -> list[dict[str, Any]]:
         """Returns all files/folders that have father_id as parent."""
 
         items = await self.metadata_service.get_objects(code, items_type=items_type)

@@ -12,8 +12,6 @@ import pytest
 from dataset.components.dataset.activity_log import DatasetActivityLog
 from dataset.components.dataset.schemas import DatasetResponseSchema
 
-pytestmark = pytest.mark.asyncio
-
 
 @pytest.mark.parametrize('code', [('ot'), ('ascbdascbdascbdascbdascbdascbda12'), ('ps!@#'), (' ')])
 async def test_create_dataset_invalid_code_should_return_400(client, code, jq, minio_container):
@@ -33,10 +31,10 @@ async def test_create_dataset_invalid_code_should_return_400(client, code, jq, m
     assert error[0]['msg'] == 'string does not match regex "^[a-z0-9]{3,32}$"'
 
 
-async def test_create_dataset_long_title_should_return_422(client, jq, faker, minio_container):
+async def test_create_dataset_long_title_should_return_422(client, jq, fake, minio_container):
     payload = {
         'creator': 'amyguindoc14',
-        'title': faker.text(1000),
+        'title': fake.text(1000),
         'authors': ['123'],
         'type': 'GENERAL',
         'description': '123',
@@ -52,8 +50,20 @@ async def test_create_dataset_long_title_should_return_422(client, jq, faker, mi
 
 @mock.patch.object(DatasetActivityLog, 'send_dataset_on_create_event')
 async def test_create_dataset_should_return_200(
-    mock_dataset_activity_log, client, dataset_factory, dataset_crud, minio_container, minio_client, s3_test_client, jq
+    mock_dataset_activity_log,
+    client,
+    dataset_factory,
+    dataset_crud,
+    minio_container,
+    minio_client,
+    s3_test_client,
+    jq,
+    schema_template_factory,
+    settings,
 ):
+    await schema_template_factory.truncate_table()
+    await schema_template_factory.create(name=settings.ESSENTIALS_TEMPLATE_NAME, system_defined=True, dataset_id=None)
+
     dataset = dataset_factory.generate(
         creator='amyguindoc14',
         title='123',

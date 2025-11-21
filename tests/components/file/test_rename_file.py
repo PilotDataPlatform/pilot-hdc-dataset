@@ -10,12 +10,8 @@ from copy import deepcopy
 from unittest import mock
 from uuid import uuid4
 
-import pytest
-
 from dataset.components.file.schemas import ItemStatusSchema
 from dataset.components.object_storage.s3 import S3Client
-
-pytestmark = pytest.mark.asyncio
 
 
 async def test_rename_file_should_add_file_to_processing_and_return_200(
@@ -246,7 +242,7 @@ async def test_rename_top_level_folder_keeps_all_subfolders_and_files_order(
     file_dict_new = deepcopy(file_dict)
     file_dict_new['parent_path'] = f'new_name/{folder_lvl2_dict["name"]}/{folder_lvl3_dict["name"]}'
     file_dict_new['location_uri'] = (
-        'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+        f'minio://http://MINIO_ENDPOINT/{dataset.code}/data/new_name/folder2/folder3/.hidden_file.txt'
     )
     correct_file_request = {
         'parent': folder_lvl3_id,
@@ -257,7 +253,7 @@ async def test_rename_top_level_folder_keeps_all_subfolders_and_files_order(
         'container_code': dataset.code,
         'container_type': 'dataset',
         'location_uri': (
-            'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+            f'minio://http://MINIO_ENDPOINT/{dataset.code}/data/new_name/folder2/folder3/.hidden_file.txt'
         ),
         'size': 0,
         'zone': 1,
@@ -432,7 +428,7 @@ async def test_rename_middle_level_folder_keeps_all_subfolders_and_files_order(
     file_dict_new = deepcopy(file_dict)
     file_dict_new['parent_path'] = f'{folder_lvl1_dict["name"]}/new_name/{folder_lvl3_dict["name"]}'
     file_dict_new['location_uri'] = (
-        'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+        f'minio://http://MINIO_ENDPOINT/{dataset.code}/data/new_name/folder2/folder3/.hidden_file.txt'
     )
     correct_file_request = {
         'parent': folder_lvl3_id,
@@ -443,7 +439,7 @@ async def test_rename_middle_level_folder_keeps_all_subfolders_and_files_order(
         'container_code': dataset.code,
         'container_type': 'dataset',
         'location_uri': (
-            'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/folder1/new_name/folder3/.hidden_file.txt'
+            f'minio://http://MINIO_ENDPOINT/{dataset.code}/data/folder1/new_name/folder3/.hidden_file.txt'
         ),
         'size': 0,
         'zone': 1,
@@ -599,7 +595,7 @@ async def test_rename_bottom_level_folder_keeps_all_subfolders_and_files_order(
     file_dict_new = deepcopy(file_dict)
     file_dict_new['parent_path'] = f'{folder_lvl1_dict["name"]}/{folder_lvl2_dict["name"]}/new_name'
     file_dict_new['location_uri'] = (
-        'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/new_name/folder2/folder3/.hidden_file.txt'
+        f'minio://http://MINIO_ENDPOINT/{dataset.code}/data/new_name/folder2/folder3/.hidden_file.txt'
     )
     correct_file_request = {
         'parent': folder_lvl3_id,
@@ -610,7 +606,7 @@ async def test_rename_bottom_level_folder_keeps_all_subfolders_and_files_order(
         'container_code': dataset.code,
         'container_type': 'dataset',
         'location_uri': (
-            'minio://http://MINIO_ENDPOINT/l6n6g0i4s8i7w6g4n7z5/data/folder1/folder2/new_name/.hidden_file.txt'
+            f'minio://http://MINIO_ENDPOINT/{dataset.code}/data/folder1/folder2/new_name/.hidden_file.txt'
         ),
         'size': 0,
         'zone': 1,

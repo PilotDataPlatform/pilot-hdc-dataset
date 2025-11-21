@@ -4,8 +4,10 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
+from dataset.components.version.models import Version
 from dataset.components.version.views import router as version_router
 
 __all__ = [
+    'Version',
     'version_router',
 ]

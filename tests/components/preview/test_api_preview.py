@@ -8,7 +8,6 @@ from uuid import uuid4
 
 import pytest
 
-from dataset.config import get_settings
 from dataset.dependencies import get_s3_client
 
 
@@ -74,10 +73,8 @@ async def long_file(minio_container):
 
 
 async def test_preview_should_concatenate_true_when_file_size_bigger_than_conf(
-    long_file, client, httpx_mock, authorization_header
+    long_file, client, httpx_mock, authorization_header, settings
 ):
-    settings = get_settings()
-
     bucket_name, file_name, file_body = long_file
     file_id = '6c99e8bb-ecff-44c8-8fdc-a3d0ed7ac067-164.8138467'
 

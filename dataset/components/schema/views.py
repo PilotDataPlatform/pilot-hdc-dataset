@@ -14,6 +14,7 @@ from dataset.components.dataset.crud import DatasetCRUD
 from dataset.components.dataset.dependencies import get_dataset_crud
 from dataset.components.dataset.schemas import DatasetUpdateSchema
 from dataset.components.schema.activity_log import SchemaDatasetActivityLogService
+from dataset.components.schema.activity_log import get_schema_dataset_activity_log_service
 from dataset.components.schema.crud import SchemaCRUD
 from dataset.components.schema.dependencies import get_schema_crud
 from dataset.components.schema.schemas import DELETESchema
@@ -33,7 +34,7 @@ router = APIRouter(prefix='/schema', tags=['Schema'])
 async def create(
     data: POSTSchema,
     schema_crud: SchemaCRUD = Depends(get_schema_crud),
-    activity_log: SchemaDatasetActivityLogService = Depends(),
+    activity_log: SchemaDatasetActivityLogService = Depends(get_schema_dataset_activity_log_service),
 ) -> LegacySchemaResponse:
     """Create a new schema."""
 
@@ -60,11 +61,12 @@ async def update(
     data: PUTSchema,
     schema_crud: SchemaCRUD = Depends(get_schema_crud),
     dataset_crud: DatasetCRUD = Depends(get_dataset_crud),
-    activity_log: SchemaDatasetActivityLogService = Depends(),
+    activity_log: SchemaDatasetActivityLogService = Depends(get_schema_dataset_activity_log_service),
 ) -> LegacySchemaResponse:
     """Update a schema."""
 
-    schema = await schema_crud.update(schema_id, UpdateSchema(**data.dict()))
+    async with schema_crud:
+        schema = await schema_crud.update(schema_id, UpdateSchema(**data.dict()))
     if schema.name == settings.ESSENTIALS_NAME:
         dataset_schema = DatasetUpdateSchema.from_schema(schema.content)
         await dataset_crud.update(schema.dataset.id, dataset_schema)
@@ -79,7 +81,7 @@ async def delete(
     schema_id: UUID,
     data: DELETESchema,
     schema_crud: SchemaCRUD = Depends(get_schema_crud),
-    activity_log: SchemaDatasetActivityLogService = Depends(),
+    activity_log: SchemaDatasetActivityLogService = Depends(get_schema_dataset_activity_log_service),
 ) -> Response:
     """Delete a schema."""
 

@@ -4,7 +4,6 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import Union
 from uuid import UUID
 
 from sqlalchemy.future import select
@@ -38,7 +37,7 @@ class DatasetCRUD(CRUD):
         except NotFound:
             raise DatasetNotFound()
 
-    async def retrieve_by_id_or_code(self, id_or_code: Union[UUID, str]) -> Dataset:
+    async def retrieve_by_id_or_code(self, id_or_code: UUID | str) -> Dataset:
         """Get an existing dataset either by id or by code (depending on type)."""
         if isinstance(id_or_code, UUID):
             dataset = await self.retrieve_by_id(id_or_code)

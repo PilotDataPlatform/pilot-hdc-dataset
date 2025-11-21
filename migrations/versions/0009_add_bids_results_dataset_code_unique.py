@@ -3,8 +3,7 @@
 # Licensed under the GNU AFFERO GENERAL PUBLIC LICENSE,
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
-
-"""add unique key to dataset_code in bids_result.
+"""Add unique key to dataset_code in bids_result.
 
 Revision ID: 0009
 Revises: 0008

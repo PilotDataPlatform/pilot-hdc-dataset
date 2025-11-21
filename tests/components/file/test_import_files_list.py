@@ -8,11 +8,7 @@ import json
 from copy import deepcopy
 from uuid import uuid4
 
-import pytest
-
 from dataset.components.file.schemas import ItemStatusSchema
-
-pytestmark = pytest.mark.asyncio
 
 
 async def test_import_files_from_source_list_should_return_200(

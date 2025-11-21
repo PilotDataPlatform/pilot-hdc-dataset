@@ -4,7 +4,6 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import Optional
 from uuid import UUID
 
 from fastapi import Query
@@ -23,7 +22,7 @@ class VersionSortByFields(SortByFields):
 class VersionFilterParameters(FilterParameters):
     """Query parameters for versions filtering."""
 
-    dataset_id: Optional[UUID] = Query(default=None)
+    dataset_id: UUID | None = Query(default=None)
 
     def to_filtering(self) -> VersionFiltering:
         return VersionFiltering(

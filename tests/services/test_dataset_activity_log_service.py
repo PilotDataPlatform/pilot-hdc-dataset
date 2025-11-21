@@ -16,20 +16,13 @@ from dataset.components.dataset.activity_log import DatasetActivityLog
 from dataset.components.schema.activity_log import SchemaDatasetActivityLogService
 from dataset.components.schema_template.activity_log import SchemaTemplateActivityLogService
 from dataset.components.version.activity_log import VersionActivityLog
-from dataset.config import get_settings
-
-pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture(autouse=True)
-def kafka(monkeypatch, kafka_url):
-    settings = get_settings()
-    monkeypatch.setattr(settings, 'KAFKA_URL', kafka_url)
-
-
-async def test_send_dataset_on_create_event_should_send_correct_msg(dataset_factory, kafka_dataset_consumer):
+async def test_send_dataset_on_create_event_should_send_correct_msg(
+    dataset_factory, kafka_producer_client, kafka_dataset_consumer
+):
     dataset = await dataset_factory.create()
-    dataset_activity_log = DatasetActivityLog()
+    dataset_activity_log = DatasetActivityLog(kafka_producer_client=kafka_producer_client)
 
     await dataset_activity_log.send_dataset_on_create_event(dataset)
 
@@ -52,15 +45,18 @@ async def test_send_dataset_on_create_event_should_send_correct_msg(dataset_fact
 @pytest.mark.parametrize(
     'method,change,activity',
     [
-        (SchemaTemplateActivityLogService().send_schema_template_on_delete_event, [], 'template_delete'),
-        (SchemaTemplateActivityLogService().send_schema_template_on_create_event, [], 'template_create'),
+        ('send_schema_template_on_delete_event', [], 'template_delete'),
+        ('send_schema_template_on_create_event', [], 'template_create'),
     ],
 )
 async def test_send_schema_template_events_send_correct_msg(
-    kafka_dataset_consumer, schema_template_factory, dataset_factory, method, change, activity
+    kafka_producer_client, kafka_dataset_consumer, schema_template_factory, dataset_factory, method, change, activity
 ):
     dataset = await dataset_factory.create()
     schema_template = await schema_template_factory.create(dataset_id=dataset.id)
+
+    schema_template_activity_log_service = SchemaTemplateActivityLogService(kafka_producer_client=kafka_producer_client)
+    method = getattr(schema_template_activity_log_service, method)
     if change:
         await method(schema_template, schema_template.dataset, change)
     else:
@@ -84,11 +80,11 @@ async def test_send_schema_template_events_send_correct_msg(
 
 
 async def test_send_publish_version_succeed_should_send_correct_msg(
-    dataset_factory, version_factory, kafka_dataset_consumer
+    dataset_factory, version_factory, kafka_producer_client, kafka_dataset_consumer
 ):
     dataset = await dataset_factory.create()
     version = await version_factory.create(dataset_code=dataset.code, dataset_id=dataset.id, created_by=dataset.creator)
-    version_activity_log = VersionActivityLog()
+    version_activity_log = VersionActivityLog(kafka_producer_client=kafka_producer_client)
     await version_activity_log.send_publish_version_succeed(version)
 
     msg = await kafka_dataset_consumer.getone()
@@ -107,12 +103,37 @@ async def test_send_publish_version_succeed_should_send_correct_msg(
     assert activity_log_schema.changes == activity_log['changes']
 
 
+async def test_send_version_download_event_sends_correct_msg(
+    dataset_factory, version_factory, kafka_producer_client, kafka_dataset_consumer, fake
+):
+    dataset = await dataset_factory.create()
+    operator = fake.user_name()
+    version = await version_factory.create(dataset_code=dataset.code, dataset_id=dataset.id, created_by=dataset.creator)
+    version_activity_log = VersionActivityLog(kafka_producer_client=kafka_producer_client)
+    await version_activity_log.send_version_download_event(version, operator)
+
+    msg = await kafka_dataset_consumer.getone()
+
+    schema_loaded = avro_schema.load_schema('dataset/components/activity_log/dataset.activity.avsc')
+    activity_log = schemaless_reader(io.BytesIO(msg.value), schema_loaded)
+
+    activity_log_schema = DatasetActivityLogSchema.parse_obj(activity_log)
+
+    assert activity_log_schema.version == version.version
+    assert activity_log_schema.container_code == version.dataset.code
+    assert activity_log_schema.user == operator
+    assert activity_log_schema.target_name == version.filename
+    assert activity_log_schema.activity_type == 'download'
+    assert activity_log_schema.activity_time == activity_log['activity_time']
+    assert activity_log_schema.changes == activity_log['changes']
+
+
 @pytest.mark.parametrize(
     'method,change,activity,username',
     [
-        (SchemaDatasetActivityLogService().send_schema_delete_event, [], 'schema_delete', 'user'),
+        ('send_schema_delete_event', [], 'schema_delete', 'user'),
         (
-            SchemaDatasetActivityLogService().send_schema_update_event,
+            'send_schema_update_event',
             [
                 ActivitySchema(
                     **{
@@ -125,17 +146,26 @@ async def test_send_publish_version_succeed_should_send_correct_msg(
             'schema_update',
             'user',
         ),
-        (SchemaDatasetActivityLogService().send_schema_create_event, [], 'schema_create', 'user'),
+        ('send_schema_create_event', [], 'schema_create', 'user'),
     ],
 )
 async def test_send_schema_events_send_correct_msg(
-    kafka_dataset_consumer, method, change, activity, username, dataset_factory, schema_template_factory, schema_factory
+    kafka_producer_client,
+    kafka_dataset_consumer,
+    method,
+    change,
+    activity,
+    username,
+    dataset_factory,
+    schema_template_factory,
+    schema_factory,
 ):
-
     dataset = await dataset_factory.create()
     schema_template = await schema_template_factory.create(dataset_id=dataset.id)
     schema = await schema_factory.create(dataset_id=str(dataset.id), schema_template_id=str(schema_template.id))
 
+    schema_template_activity_log_service = SchemaDatasetActivityLogService(kafka_producer_client=kafka_producer_client)
+    method = getattr(schema_template_activity_log_service, method)
     if change:
         await method(schema, username, change)
         changes = change[0].get_changes()

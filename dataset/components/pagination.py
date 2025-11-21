@@ -5,12 +5,11 @@
 # You may not use this file except in compliance with the License.
 
 import math
-from typing import List
 
 from pydantic import BaseModel
 from pydantic import conint
 
-from dataset.components import DBModel
+from dataset.components.db_model import DBModel
 
 
 class Pagination(BaseModel):
@@ -33,7 +32,7 @@ class Page(BaseModel):
 
     pagination: Pagination
     count: int
-    entries: List[DBModel]
+    entries: list[DBModel]
 
     class Config:
         arbitrary_types_allowed = True

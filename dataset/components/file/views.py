@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 import copy
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter
@@ -47,7 +46,7 @@ async def import_dataset(
     file_taks: FileOperationTasks = Depends(),
     file_crud: FileCRUD = Depends(get_file_crud),
     project_service: ProjectService = Depends(get_project_service),
-    Session_ID: Optional[str] = Header(None),
+    Session_ID: str | None = Header(None),
 ) -> LegacyFileResponse:
     """API imports file list from project to dataset."""
     logger.info('IMPORT FILES: begin endpoint')
@@ -58,7 +57,7 @@ async def import_dataset(
 
     dataset = await dataset_crud.retrieve_by_id(dataset_id)
     logger.info('IMPORT FILES: retrieve dataset.')
-    if dataset.project_id and str(dataset.project_id) != project_id:
+    if str(dataset.project_id) != project_id:
         raise Forbidden()
     project = await project_service.get_by_id(project_id)
     logger.info('IMPORT FILES: retrieve project.')
@@ -78,7 +77,6 @@ async def import_dataset(
             import_list,
             dataset,
             oper,
-            project_id,
             project['code'],
             Session_ID,
         )
@@ -97,7 +95,7 @@ async def delete_files(
     dataset_crud: DatasetCRUD = Depends(get_dataset_crud),
     file_taks: FileOperationTasks = Depends(),
     file_crud: FileCRUD = Depends(get_file_crud),
-    Session_ID: Optional[str] = Header(None),
+    Session_ID: str | None = Header(None),
 ) -> LegacyFileResponse:
     """API deletes file by id within Dataset."""
 
@@ -157,7 +155,7 @@ async def move_files(
     dataset_crud: DatasetCRUD = Depends(get_dataset_crud),
     file_taks: FileOperationTasks = Depends(),
     file_crud: FileCRUD = Depends(get_file_crud),
-    Session_ID: Optional[str] = Header(None),
+    Session_ID: str | None = Header(None),
 ) -> LegacyFileResponse:
     """API moves files within the dataset."""
     dataset = await dataset_crud.retrieve_by_id(dataset_id)
@@ -217,7 +215,7 @@ async def rename_file(
     dataset_crud: DatasetCRUD = Depends(get_dataset_crud),
     file_taks: FileOperationTasks = Depends(),
     file_crud: FileCRUD = Depends(get_file_crud),
-    Session_ID: Optional[str] = Header(None),
+    Session_ID: str | None = Header(None),
 ) -> LegacyFileResponse:
     """API will rename file/folder within dataset."""
 

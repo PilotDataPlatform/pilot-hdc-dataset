@@ -6,9 +6,7 @@
 
 from typing import Any
 from typing import BinaryIO
-from typing import Dict
 
-# from boto3.s3.transfer import TransferConfig
 from common import get_boto3_admin_client
 from common import get_boto3_client
 from common.object_storage_adaptor.boto3_admin_client import Boto3AdminClient
@@ -86,5 +84,5 @@ class S3Client:
     async def delete_object(self, bucket: str, file_path: str) -> None:
         await self.boto_client.delete_object(bucket, file_path)
 
-    async def copy_object(self, source_bucket: str, source_key: str, dest_bucket: str, dest_key: str) -> Dict[str, Any]:
+    async def copy_object(self, source_bucket: str, source_key: str, dest_bucket: str, dest_key: str) -> dict[str, Any]:
         return await self.boto_client.copy_object(source_bucket, source_key, dest_bucket, dest_key)

@@ -7,8 +7,6 @@
 import json
 from datetime import datetime
 from typing import Any
-from typing import Dict
-from typing import List
 
 from pydantic import BaseModel
 
@@ -18,7 +16,7 @@ from dataset.components.pagination import Page
 class BaseSchema(BaseModel):
     """Base class for all available schemas."""
 
-    def to_payload(self) -> Dict[str, str]:
+    def to_payload(self) -> dict[str, str]:
         return json.loads(self.json(by_alias=True))
 
     class Config:
@@ -33,7 +31,7 @@ class ListResponseSchema(BaseSchema):
     num_of_pages: int
     page: int
     total: int
-    result: List[BaseSchema]
+    result: list[BaseSchema]
 
     @classmethod
     def from_page(cls, page: Page):
@@ -43,4 +41,4 @@ class ListResponseSchema(BaseSchema):
 class LegacyResponseSchema(BaseSchema):
     """Legacy schema to keep old response body and avoid to break other services."""
 
-    result: Dict[str, Any]
+    result: dict[str, Any]

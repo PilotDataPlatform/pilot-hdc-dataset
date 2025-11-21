@@ -5,9 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from datetime import datetime
-from typing import Optional
-from typing import Tuple
-from typing import Type
 from uuid import UUID
 
 from sqlalchemy import and_
@@ -21,16 +18,16 @@ from dataset.components.filtering import Filtering
 class DatasetFiltering(Filtering):
     """Datasets filtering control parameters."""
 
-    code: Optional[str] = None
-    creator: Optional[str] = None
-    created_at: Optional[Tuple[datetime, datetime]] = None
-    ids: Optional[list[UUID]] = None
-    codes: Optional[list[str]] = None
-    project_id: Optional[UUID] = None
-    project_ids: Optional[list[UUID]] = None
-    or_creator: Optional[str] = None
+    code: str | None = None
+    creator: str | None = None
+    created_at: tuple[datetime, datetime] | None = None
+    ids: list[UUID] | None = None
+    codes: list[str] | None = None
+    project_id: UUID | None = None
+    project_ids: list[UUID] | None = None
+    or_creator: str | None = None
 
-    def apply(self, statement: Select, model: Type[Dataset]) -> Select:
+    def apply(self, statement: Select, model: type[Dataset]) -> Select:
         """Return statement with applied filtering."""
 
         and_clauses = []
