@@ -4,7 +4,6 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_
@@ -31,15 +30,15 @@ class VersionCRUD(CRUD):
 
     async def get_dataset_version_by_version_number(self, dataset_id: UUID, version: str) -> Version:
         """Retrieve version by specific dataset id and version number."""
-        statement = select(self.model).where((and_(self.model.version == version, self.model.dataset_id == dataset_id)))
+        statement = self.select_query.where(and_(self.model.version == version, self.model.dataset_id == dataset_id))
         return await self._retrieve_one(statement)
 
     async def get_last_dataset_version(self, dataset_id: UUID) -> Version:
         """Retrieve last version from specific dataset."""
-        statement = select(self.model).where(self.model.dataset_id == dataset_id).order_by(Version.created_at.desc())
+        statement = self.select_query.where(self.model.dataset_id == dataset_id).order_by(Version.created_at.desc())
         return await self._retrieve_one(statement)
 
-    async def get_version(self, dataset_id: UUID, version: Optional[str] = None) -> Version:
+    async def get_version(self, dataset_id: UUID, version: str | None = None) -> Version:
         """Retrieve specific version from dataset when version otherwise last version from specific dataset."""
         if version:
             return await self.get_dataset_version_by_version_number(dataset_id, version)

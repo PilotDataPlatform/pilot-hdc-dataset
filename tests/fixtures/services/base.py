@@ -5,11 +5,12 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import Dict
 
+import jwt
 import pytest
 
 
 @pytest.fixture
-def authorization_header() -> Dict[str, Any]:
-    return {'Authorization': 'Bearer eyJh'}
+def authorization_header(fake) -> dict[str, Any]:
+    token = jwt.encode({'preferred_username': fake.user_name()}, key='')
+    return {'Authorization': f'Bearer {token}'}

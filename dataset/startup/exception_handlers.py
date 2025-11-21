@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from dataset.components.exceptions import ServiceException
 from dataset.components.exceptions import UnhandledException
+from dataset.logger import logger
 
 
 def service_exception_handler(request: Request, exception: ServiceException) -> JSONResponse:
@@ -21,6 +22,7 @@ def service_exception_handler(request: Request, exception: ServiceException) -> 
 def unexpected_exception_handler(request: Request, exception: Exception) -> JSONResponse:
     """Return the default unhandled exception response structure for all unexpected exceptions."""
 
+    logger.exception(f'An exception occurred while processing "{request.url}" url', exc_info=exception)  # noqa: G202
     return service_exception_handler(request, UnhandledException())
 
 

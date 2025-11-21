@@ -6,29 +6,18 @@
 
 import logging
 from functools import lru_cache
+from typing import Annotated
 from typing import Any
 
-from common import VaultClient
+from fastapi import Depends
 from pydantic import BaseSettings
 from pydantic import Extra
 from pydantic import Field
-from starlette.config import Config
-
-config = Config('.env')
-SRV_NAMESPACE = config('APP_NAME', cast=str, default='service_dataset')
-CONFIG_CENTER_ENABLED = config('CONFIG_CENTER_ENABLED', cast=str, default='false')
-CONFIG_CENTER_BASE_URL = config('CONFIG_CENTER_BASE_URL', cast=str, default='NOT_SET')
-
-
-def load_vault_settings(settings: BaseSettings) -> dict[str, Any]:
-    if CONFIG_CENTER_ENABLED == 'false':
-        return {}
-    else:
-        vc = VaultClient(config('VAULT_URL'), config('VAULT_CRT'), config('VAULT_TOKEN'))
-        return vc.get_from_vault(SRV_NAMESPACE)
 
 
 class Settings(BaseSettings):
+
+    APP_NAME: str = 'service_dataset'
     DEBUG: bool = False
     PORT: int = 5081
     HOST: str = '0.0.0.0'
@@ -99,10 +88,6 @@ class Settings(BaseSettings):
         env_file_encoding = 'utf-8'
         extra = Extra.allow
 
-        @classmethod
-        def customise_sources(cls, init_settings, env_settings, file_secret_settings):
-            return init_settings, env_settings, load_vault_settings, file_secret_settings
-
     def __init__(self, *args: Any, **kwds: Any) -> None:
         super().__init__(*args, **kwds)
 
@@ -125,3 +110,6 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     settings = Settings()
     return settings
+
+
+SettingsDependency = Annotated[Settings, Depends(get_settings)]

@@ -6,7 +6,6 @@
 
 from datetime import datetime
 from typing import Any
-from typing import Dict
 
 from dataset.components.schemas import BaseSchema
 
@@ -22,7 +21,7 @@ class BIDSResultResponseSchema(BIDSResultSchema):
 
     created_time: datetime
     updated_time: datetime
-    validate_output: Dict[str, Any]
+    validate_output: dict[str, Any]
 
     class Config:
         orm_mode = True
@@ -37,4 +36,4 @@ class LegacyBIDSResultResponseSchema(BaseSchema):
 class UpdateBIDSResultSchema(BaseSchema):
     """Schema for create or update the BIDS result."""
 
-    validate_output: Dict[str, Any]
+    validate_output: dict[str, Any]

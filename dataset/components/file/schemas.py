@@ -6,8 +6,6 @@
 
 from enum import Enum
 from typing import Any
-from typing import Dict
-from typing import List
 
 from aiobotocore.response import StreamingBody
 
@@ -32,7 +30,7 @@ class FileStreamSchema(FileSchema):
 
 
 class ImportDataPost(BaseSchema):
-    """the post request payload for import data from project."""
+    """The post request payload for import data from project."""
 
     source_list: list
     operator: str
@@ -40,14 +38,14 @@ class ImportDataPost(BaseSchema):
 
 
 class DatasetFileDelete(BaseSchema):
-    """the delete request payload for dataset to delete files."""
+    """The delete request payload for dataset to delete files."""
 
     source_list: list
     operator: str
 
 
 class DatasetFileMove(BaseSchema):
-    """the post request payload for dataset to move files under the dataset."""
+    """The post request payload for dataset to move files under the dataset."""
 
     source_list: list
     operator: str
@@ -55,7 +53,7 @@ class DatasetFileMove(BaseSchema):
 
 
 class DatasetFileRename(BaseSchema):
-    """the post request payload for dataset to move files under the dataset."""
+    """The post request payload for dataset to move files under the dataset."""
 
     new_name: str
     operator: str
@@ -64,8 +62,8 @@ class DatasetFileRename(BaseSchema):
 class FileOperationResponse(BaseSchema):
     """Schema for file operation response."""
 
-    processing: List[Dict[str, Any]]
-    ignored: List[Dict[str, Any]]
+    processing: list[dict[str, Any]]
+    ignored: list[dict[str, Any]]
 
 
 class LegacyFileResponse(BaseSchema):
@@ -78,7 +76,7 @@ class LegacyFileListResponse(BaseSchema):
     """Legacy schema for single file response."""
 
     total: int
-    result: Dict[str, Any]
+    result: dict[str, Any]
 
 
 class ResourceLockingSchema(BaseSchema):

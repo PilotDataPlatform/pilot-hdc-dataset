@@ -21,8 +21,6 @@ from dataset.components.folder.dependencies import get_folder_crud
 from dataset.dependencies.s3 import get_s3_client
 from dataset.services.task_stream import TaskStreamService
 
-pytestmark = pytest.mark.asyncio
-
 OPER = 'admin'
 SESSION_ID = '12345'
 
@@ -74,13 +72,13 @@ def external_requests(httpx_mock):
 
 
 @pytest_asyncio.fixture
-async def file_tasks(metadata_service):
+async def file_tasks(metadata_service, kafka_producer_client):
     s3_client = await get_s3_client()
     file_crud = await get_file_crud(s3_client, metadata_service)
     folder_crud = await get_folder_crud(s3_client, metadata_service)
     locking_manager = await get_locking_manager(folder_crud)
     task_stream_service = TaskStreamService()
-    file_activity_log_service = FileActivityLogService()
+    file_activity_log_service = FileActivityLogService(kafka_producer_client=kafka_producer_client)
     return FileOperationTasks(file_crud, folder_crud, locking_manager, task_stream_service, file_activity_log_service)
 
 
@@ -90,7 +88,6 @@ async def test_copy_file_worker_should_import_file_succeed(
     mock_recursive_lock_import, mock_kafka_msg, external_requests, file_tasks, httpx_mock, dataset_crud, dataset_factory
 ):
     dataset = await dataset_factory.create()
-    source_project_geid = str(uuid4())
 
     mock_recursive_lock_import.return_value = [], False
     import_list = [
@@ -115,7 +112,7 @@ async def test_copy_file_worker_should_import_file_succeed(
         mock_recursive_copy.return_value = 1, 1, None
         try:
             await file_tasks.copy_files_worker(
-                dataset_crud, import_list, dataset, OPER, source_project_geid, 'source_project_code', SESSION_ID
+                dataset_crud, import_list, dataset, OPER, 'source_project_code', SESSION_ID
             )
         except Exception as e:
             pytest.fail(f'copy_files_worker raised {e} unexpectedly')
@@ -130,7 +127,6 @@ async def test_copy_file_worker_raise_exception_should_import_file_cancelled(
     mock_recursive_lock_import, mock_kafka_msg, external_requests, file_tasks, httpx_mock, dataset_crud, dataset_factory
 ):
     dataset = await dataset_factory.create()
-    source_project_geid = str(uuid4())
     httpx_mock.add_response(
         method='POST',
         url='http://data_ops_util/v1/task-stream/',
@@ -162,9 +158,7 @@ async def test_copy_file_worker_raise_exception_should_import_file_cancelled(
         }
     ]
     try:
-        await file_tasks.copy_files_worker(
-            dataset_crud, import_list, dataset, OPER, source_project_geid, 'project_code', SESSION_ID
-        )
+        await file_tasks.copy_files_worker(dataset_crud, import_list, dataset, OPER, 'project_code', SESSION_ID)
     except Exception as e:
         pytest.fail(f'copy_files_worker raised {e} unexpectedly')
     content = json.loads(httpx_mock.get_requests()[-1].content)

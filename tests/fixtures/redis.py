@@ -4,13 +4,15 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-import pytest_asyncio
+import pytest
 from testcontainers.redis import RedisContainer
 
+REDIS_DOCKER_IMAGE = 'docker-registry.ebrains.eu/hdc-services-external/redis:7.2.5'
 
-@pytest_asyncio.fixture(scope='session')
+
+@pytest.fixture(scope='session')
 def redis_url():
-    with RedisContainer(password='auth') as redis:
+    with RedisContainer(image=REDIS_DOCKER_IMAGE) as redis:
         host = redis.get_container_host_ip()
         port = redis.get_exposed_port(redis.port)
         yield host, port

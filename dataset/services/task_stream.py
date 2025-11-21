@@ -7,8 +7,6 @@
 import re
 from time import time
 from typing import Any
-from typing import Dict
-from typing import List
 
 import httpx
 
@@ -25,7 +23,7 @@ class TaskStreamService:
 
     TASK_URL = settings.DATA_UTILITY_SERVICE_V1 + '/task-stream/'
 
-    async def _write_file_status_event(self, file_status: FileStatus) -> Dict[str, Any]:
+    async def _write_file_status_event(self, file_status: FileStatus) -> dict[str, Any]:
         """Send file status to DataOps to be written into Redis."""
 
         post_json = file_status.dict()
@@ -47,7 +45,7 @@ class TaskStreamService:
     async def _create_job_status(
         self,
         session_id: str,
-        source_file: List[Dict[str, Any]],
+        source_file: list[dict[str, Any]],
         action: EActionType,
         status: EFileStatus,
         dataset_code: str,
@@ -75,8 +73,8 @@ class TaskStreamService:
         return {source_geid: return_id}
 
     async def initialize_file_jobs(
-        self, session_id: str, action: EActionType, batch_list: List[Dict[str, Any]], dataset_code: str
-    ) -> Dict[str, Any]:
+        self, session_id: str, action: EActionType, batch_list: list[dict[str, Any]], dataset_code: str
+    ) -> dict[str, Any]:
         """Creates and sends the initial status of a batch of files to the DataOps service to be written into Redis."""
 
         job_ids = {}
@@ -94,12 +92,12 @@ class TaskStreamService:
     async def update_job_status(
         self,
         session_id: str,
-        source_file: Dict[str, Any],
+        source_file: dict[str, Any],
         action: EActionType,
         status: EFileStatus,
         dataset_code,
         job_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Updates the status of a file job and sends it to the DataOps service to be written into Redis."""
 
         logger.info('update_job_status', extra={'file': source_file, 'job_id': job_id, 'status': status})

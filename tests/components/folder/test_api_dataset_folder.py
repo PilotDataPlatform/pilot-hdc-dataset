@@ -11,8 +11,6 @@ import pytest
 from dataset.components.file.schemas import ItemStatusSchema
 from dataset.components.folder.activity_log import FolderActivityLog
 
-pytestmark = pytest.mark.asyncio
-
 
 @mock.patch.object(FolderActivityLog, '_message_send')
 async def test_create_root_folder_should_return_200_and_folder_data(
@@ -314,8 +312,8 @@ async def test_create_sub_folder_when_parent_folder_not_found_should_return_404(
     assert res.json()['error'] == {'code': 'global.not_found', 'details': 'Requested resource is not found'}
 
 
-async def test_create_folder_with_long_folder_name_should_return_422(client, dataset_factory, faker):
-    folder_name = faker.pystr(31, 31)
+async def test_create_folder_with_long_folder_name_should_return_422(client, dataset_factory, fake):
+    folder_name = fake.pystr(31, 31)
     dataset = await dataset_factory.create()
     dataset_id = str(dataset.id)
 

@@ -7,9 +7,6 @@
 from datetime import datetime
 from datetime import timezone
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -24,7 +21,7 @@ def get_current_datetime():
 
 class ActivityDetailsSchema(BaseSchema):
     name: str
-    targets: List[str]
+    targets: list[str]
 
 
 class ActivitySchema(BaseSchema):
@@ -32,21 +29,22 @@ class ActivitySchema(BaseSchema):
     resource: str
     detail: ActivityDetailsSchema
 
-    def get_changes(self) -> List[Dict[str, Any]]:
+    def get_changes(self) -> list[dict[str, Any]]:
         return [{'property': target.lower() for target in self.detail.targets}]
 
 
 class BaseActivityLogSchema(BaseModel):
     activity_time: datetime = Field(default_factory=get_current_datetime)
-    changes: List[Dict[str, Any]] = []
+    changes: list[dict[str, Any]] = []
+    network_origin: str = 'unknown'
     activity_type: str
     user: str
     container_code: str
 
 
 class DatasetActivityLogSchema(BaseActivityLogSchema):
-    version: Optional[str]
-    target_name: Optional[str] = None
+    version: str | None
+    target_name: str | None = None
 
 
 class FileFolderActivityLogSchema(BaseActivityLogSchema):
@@ -56,4 +54,4 @@ class FileFolderActivityLogSchema(BaseActivityLogSchema):
     item_parent_path: str = ''
     container_type: str = 'dataset'
     zone: int = 1
-    imported_from: Optional[str] = None
+    imported_from: str | None = None

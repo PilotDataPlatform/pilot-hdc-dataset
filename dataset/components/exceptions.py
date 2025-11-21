@@ -11,7 +11,6 @@ from http.client import FORBIDDEN
 from http.client import INTERNAL_SERVER_ERROR
 from http.client import NOT_FOUND
 from http.client import UNAUTHORIZED
-from typing import Dict
 
 
 class ServiceException(Exception, metaclass=ABCMeta):
@@ -40,7 +39,7 @@ class ServiceException(Exception, metaclass=ABCMeta):
 
         raise NotImplementedError
 
-    def dict(self) -> Dict[str, str]:
+    def dict(self) -> dict[str, str]:
         """Represent error as dictionary."""
 
         return {

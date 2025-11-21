@@ -6,7 +6,7 @@
 
 from time import time
 from typing import Any
-from typing import Dict
+from uuid import UUID
 
 from dataset.config import get_settings
 from dataset.logger import logger
@@ -19,12 +19,38 @@ class QueueService(BaseService):
     BASE_URL = settings.QUEUE_SERVICE
     HEADERS = {'Content-type': 'application/json; charset=utf-8'}
 
-    async def send_message(self, dataset_code: str) -> Dict[str, Any]:
+    async def send_message(self, dataset_code: str) -> dict[str, Any]:
         payload = {
             'event_type': 'bids_validate',
             'payload': {
                 'dataset_code': str(dataset_code),
                 'project': 'dataset',
+                'access_token': self._get_authorization_token(),
+            },
+            'create_timestamp': time(),
+        }
+        url = self.BASE_URL + '/send_message'
+        logger.info(f'Sending Message To Queue: {payload}')
+        response = await self.create(url=url, payload=payload)
+        return response
+
+    async def send_share_dataset_version_message(
+        self,
+        version_id: UUID,
+        destination_project_code: str,
+        job_id: str,
+        session_id: str,
+        operator: str,
+    ) -> dict[str, Any]:
+        payload = {
+            'event_type': 'share_dataset_version',
+            'payload': {
+                'project': 'dataset',
+                'version_id': str(version_id),
+                'destination_project_code': destination_project_code,
+                'job_id': job_id,
+                'session_id': session_id,
+                'operator': operator,
                 'access_token': self._get_authorization_token(),
             },
             'create_timestamp': time(),

@@ -6,17 +6,20 @@
 
 import io
 from typing import Any
-from typing import Dict
 
 from fastavro import schema
 from fastavro import schemaless_writer
 
-from dataset.dependencies import get_kafka_client
+from dataset.dependencies.kafka import KafkaProducerClient
 from dataset.logger import logger
 
 
 class ActivityLogService:
-    async def _message_send(self, data: Dict[str, Any] = None) -> dict:
+
+    def __init__(self, *, kafka_producer_client: KafkaProducerClient) -> None:
+        self.kafka_producer_client = kafka_producer_client
+
+    async def _message_send(self, data: dict[str, Any] = None) -> None:
         logger.info(f'Sending socket notification: {str(data)}')
         loaded_schema = schema.load_schema(self.avro_schema_path)
         bio = io.BytesIO()
@@ -26,5 +29,6 @@ class ActivityLogService:
         except ValueError:
             logger.exception('Error during the AVRO validation.')
             raise
-        client = await get_kafka_client()
-        await client.send(self.topic, msg)
+
+        await self.kafka_producer_client.send(self.topic, msg)
+        logger.info('Socket notification successfully sent')

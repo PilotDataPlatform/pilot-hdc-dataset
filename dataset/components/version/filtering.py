@@ -4,8 +4,6 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import Optional
-from typing import Type
 from uuid import UUID
 
 from sqlalchemy.sql import Select
@@ -17,9 +15,9 @@ from dataset.components.version.models import Version
 class VersionFiltering(Filtering):
     """Version filtering control parameters."""
 
-    dataset_id: Optional[UUID] = None
+    dataset_id: UUID | None = None
 
-    def apply(self, statement: Select, model: Type[Version]) -> Select:
+    def apply(self, statement: Select, model: type[Version]) -> Select:
         """Return statement with applied filtering."""
 
         if self.dataset_id:

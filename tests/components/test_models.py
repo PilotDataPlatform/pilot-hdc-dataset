@@ -10,12 +10,12 @@ from dataset.components.models import ModelList
 
 
 class TestModelList:
-    def test_map_by_field_returns_map_based_on_field_argument_as_key(self, faker):
+    def test_map_by_field_returns_map_based_on_field_argument_as_key(self, fake):
         class Model(BaseModel):
             id: int
 
-        model_1 = Model(id=faker.pyint())
-        model_2 = Model(id=faker.pyint())
+        model_1 = Model(id=fake.pyint())
+        model_2 = Model(id=fake.pyint())
 
         models = ModelList([model_1, model_2])
 

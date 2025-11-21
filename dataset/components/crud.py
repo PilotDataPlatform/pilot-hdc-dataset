@@ -5,10 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import Union
 from uuid import UUID
 
 from sqlalchemy import delete
@@ -34,13 +30,14 @@ from dataset.components.pagination import Page
 from dataset.components.pagination import Pagination
 from dataset.components.schemas import BaseSchema
 from dataset.components.sorting import Sorting
+from dataset.logger import logger
 
 
 class CRUD:
     """Base CRUD class for managing database models."""
 
     session: AsyncSession
-    model: Type[DBModel]
+    model: type[DBModel]
     db_error_codes: dict[str, ServiceException] = {
         '23503': NotFound(),  # missing foreign key
         '23505': AlreadyExists(),  # duplicated entry
@@ -50,11 +47,19 @@ class CRUD:
         self.session = db_session
         self.transaction = None
 
+    @property
+    def session_id(self) -> UUID | None:
+        """Return current session id."""
+
+        return self.session.info.get('session_id')
+
     async def __aenter__(self) -> 'CRUD':
         """Start a new transaction."""
 
         self.transaction = self.session.begin_nested()
         await self.transaction.__aenter__()
+
+        logger.info(f'Start nested transaction for session "{self.session_id}"')
 
         return self
 
@@ -63,14 +68,24 @@ class CRUD:
 
         await self.transaction.__aexit__(*args)
 
+        logger.info(f'Exit nested transaction for session "{self.session_id}"')
+
         return None
 
     @property
     def select_query(self) -> Select:
         """Create base select."""
+
         return select(self.model)
 
-    async def execute(self, statement: Executable, **kwds: Any) -> Union[CursorResult, Result]:
+    async def commit(self) -> None:
+        """Commit the current transaction."""
+
+        await self.session.commit()
+
+        logger.info(f'Session "{self.session_id}" committed')
+
+    async def execute(self, statement: Executable, **kwds: Any) -> CursorResult | Result:
         """Execute a statement and return buffered result."""
         try:
             return await self.session.execute(statement, **kwds)
@@ -79,6 +94,8 @@ class CRUD:
                 pg_code = e.orig.pgcode
                 if pg_code in self.db_error_codes:
                     raise self.db_error_codes.get(pg_code)
+
+            logger.exception('Unhandled exception occurred during database execute operation')
             raise UnhandledException()
 
     async def scalars(self, statement: Executable, **kwds: Any) -> ScalarResult:
@@ -86,7 +103,7 @@ class CRUD:
 
         return await self.session.scalars(statement, **kwds)
 
-    async def _create_one(self, statement: Executable) -> Union[UUID, str]:
+    async def _create_one(self, statement: Executable) -> UUID | str:
         """Execute a statement to create one entry."""
         result = await self.execute(statement)
         return result.inserted_primary_key.id
@@ -102,7 +119,7 @@ class CRUD:
 
         return instance
 
-    async def _retrieve_many(self, statement: Executable) -> List[DBModel]:
+    async def _retrieve_many(self, statement: Executable) -> list[DBModel]:
         """Execute a statement to retrieve multiple entries."""
 
         result = await self.scalars(statement)
@@ -145,7 +162,7 @@ class CRUD:
         return entry
 
     async def paginate(
-        self, pagination: Pagination, sorting: Optional[Sorting] = None, filtering: Optional[Filtering] = None
+        self, pagination: Pagination, sorting: Sorting | None = None, filtering: Filtering | None = None
     ) -> Page:
         """Get all existing entries with pagination support."""
 

@@ -5,9 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 
 from dataset.components.db_model import DBModel
 
@@ -24,7 +21,7 @@ class ModelList(list):
         except ValueError:
             return getattr(source, field)
 
-    def map_by_field(self, field: str, key_type: Optional[type] = None) -> Dict[Any, Any]:
+    def map_by_field(self, field: str, key_type: type | None = None) -> dict[Any, Any]:
         """Create map using field argument as key with optional type casting."""
 
         results = {}
@@ -38,7 +35,7 @@ class ModelList(list):
 
         return results
 
-    def get_field_values(self, field: str) -> List[Any]:
+    def get_field_values(self, field: str) -> list[Any]:
         """Return list with values each model has in field attribute."""
         field_values_list = []
         for source in self:

@@ -4,7 +4,7 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from collections.abc import Iterable
+from collections.abc import Sequence
 from typing import Any
 
 import httpx
@@ -17,7 +17,7 @@ class JQResult:
     def __init__(self, result: Any) -> None:
         self.result = result
 
-    def all(self, to: type = list, each_to: type = None) -> Iterable[Any]:
+    def all(self, to: type = list, each_to: type = None) -> Sequence[Any]:
         """Retrieve all values, optionally casting each item to a specified type and the entire list to another type."""
 
         values = self.result.all()

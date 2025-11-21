@@ -9,11 +9,6 @@ import pytest
 from dataset.components.file.locks import LockingManager
 from dataset.components.file.schemas import ItemStatusSchema
 from dataset.components.folder.crud import FolderCRUD
-from dataset.config import get_settings
-
-settings = get_settings()
-
-pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture
@@ -48,7 +43,7 @@ async def test_lock_resource_should_raise_exception_when_lock_request_not_200(
         await func('fake_key', 'me')
 
 
-async def test_recursive_lock_import_file_on_root_folder_should_lock_file(httpx_mock, lock_crud):
+async def test_recursive_lock_import_file_on_root_folder_should_lock_file(httpx_mock, lock_crud, settings):
     httpx_mock.add_response(
         method='POST',
         url='http://data_ops_util/v2/resource/lock/',
@@ -73,7 +68,7 @@ async def test_recursive_lock_import_file_on_root_folder_should_lock_file(httpx_
     assert locked_node == [('any_project/core/file.txt', 'read')]
 
 
-async def test_recursive_lock_import_on_root_folder_should_lock_folder(httpx_mock, lock_crud):
+async def test_recursive_lock_import_on_root_folder_should_lock_folder(httpx_mock, lock_crud, settings):
     httpx_mock.add_response(
         method='POST',
         url='http://data_ops_util/v2/resource/lock/',
@@ -142,7 +137,7 @@ async def test_recursive_lock_import_on_root_folder_should_lock_folder(httpx_moc
     assert locked_node == [('core-indoctestproject/admin/folder1/test_file.txt', 'read')]
 
 
-async def test_recursive_lock_import_should_lock_folder(httpx_mock, lock_crud):
+async def test_recursive_lock_import_should_lock_folder(httpx_mock, lock_crud, settings):
     httpx_mock.add_response(
         method='POST',
         url='http://data_ops_util/v2/resource/lock/',

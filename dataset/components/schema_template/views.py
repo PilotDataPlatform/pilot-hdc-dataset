@@ -4,13 +4,13 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import Union
 from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
 
 from dataset.components.schema_template.activity_log import SchemaTemplateActivityLogService
+from dataset.components.schema_template.activity_log import get_schema_template_activity_log_service
 from dataset.components.schema_template.crud import SchemaTemplateCRUD
 from dataset.components.schema_template.dependencies import get_schema_template_crud
 from dataset.components.schema_template.schemas import LegacySchemaTemplateListResponse
@@ -29,10 +29,11 @@ async def create_schema_template(
     dataset_id: UUID,
     request_payload: SchemaTemplateCreateSchema,
     schema_template_crud: SchemaTemplateCRUD = Depends(get_schema_template_crud),
-    activity_log: SchemaTemplateActivityLogService = Depends(),
+    activity_log: SchemaTemplateActivityLogService = Depends(get_schema_template_activity_log_service),
 ):
     request_payload.dataset_id = dataset_id
-    new_template = await schema_template_crud.create(request_payload)
+    async with schema_template_crud:
+        new_template = await schema_template_crud.create(request_payload)
     await activity_log.send_schema_template_on_create_event(new_template, new_template.dataset)
 
     return LegacySchemaTemplateResponse(result=new_template)
@@ -44,7 +45,7 @@ async def create_schema_template(
     response_model=LegacySchemaTemplateListResponse,
 )
 async def list_schema_template(
-    dataset_id: Union[UUID, str], schema_template_crud: SchemaTemplateCRUD = Depends(get_schema_template_crud)
+    dataset_id: UUID | str, schema_template_crud: SchemaTemplateCRUD = Depends(get_schema_template_crud)
 ):
     templates = await schema_template_crud.get_template_by_dataset_or_system_defined(dataset_id)
     return LegacySchemaTemplateListResponse(result=templates)
@@ -56,7 +57,7 @@ async def list_schema_template(
     response_model=LegacySchemaTemplateResponse,
 )
 async def get_schema_template(
-    dataset_id: Union[UUID, str],
+    dataset_id: UUID | str,
     template_id: UUID,
     schema_template_crud: SchemaTemplateCRUD = Depends(get_schema_template_crud),
 ):
@@ -73,7 +74,7 @@ async def remove_schema_template(
     dataset_id: UUID,
     template_id: UUID,
     schema_template_crud: SchemaTemplateCRUD = Depends(get_schema_template_crud),
-    activity_log: SchemaTemplateActivityLogService = Depends(),
+    activity_log: SchemaTemplateActivityLogService = Depends(get_schema_template_activity_log_service),
 ):
     schema_template = await schema_template_crud.retrieve_by_id(template_id)
     await schema_template_crud.delete(template_id)

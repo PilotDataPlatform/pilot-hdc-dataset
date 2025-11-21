@@ -4,13 +4,13 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import Union
 from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
 
 from dataset.components.dataset.activity_log import DatasetActivityLog
+from dataset.components.dataset.activity_log import get_dataset_activity_log
 from dataset.components.dataset.crud import DatasetCRUD
 from dataset.components.dataset.dependencies import get_dataset_crud
 from dataset.components.dataset.dependencies import get_object_storage_manager
@@ -40,9 +40,9 @@ async def create_dataset(
     policy_manager: PolicyManager = Depends(get_policy_manager),
     object_storage_manager: ObjectStorageManager = Depends(get_object_storage_manager),
     schema_crud: SchemaCRUD = Depends(get_schema_crud),
-    activity_log: DatasetActivityLog = Depends(),
+    activity_log: DatasetActivityLog = Depends(get_dataset_activity_log),
 ):
-    """dataset creation api."""
+    """Dataset creation api."""
     try:
         async with dataset_crud:
             await dataset_crud.retrieve_by_code(request_payload.code)
@@ -66,7 +66,7 @@ async def create_dataset(
 
 @router.get('/{dataset_id}', summary='Get a dataset by id or code.', response_model=DatasetResponseSchema)
 async def get_dataset(
-    dataset_id: Union[UUID, str], dataset_crud: DatasetCRUD = Depends(get_dataset_crud)
+    dataset_id: UUID | str, dataset_crud: DatasetCRUD = Depends(get_dataset_crud)
 ) -> DatasetResponseSchema:
     """Get a dataset by id or code."""
 

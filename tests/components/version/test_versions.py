@@ -7,7 +7,6 @@
 from unittest import mock
 from uuid import uuid4
 
-import pytest
 from sqlalchemy import select
 
 from dataset.components.file.schemas import ItemStatusSchema
@@ -15,8 +14,6 @@ from dataset.components.version.activity_log import VersionActivityLog
 from dataset.components.version.models import Version
 from dataset.components.version.schemas import VersionResponseSchema
 from dataset.dependencies import get_s3_client
-
-pytestmark = pytest.mark.asyncio
 
 
 @mock.patch.object(VersionActivityLog, 'send_publish_version_succeed')
@@ -155,26 +152,35 @@ async def test_version_list_should_return_200_and_version_in_result(client, vers
     dataset = await dataset_factory.create()
     version = await version_factory.create(dataset_code=dataset.code, dataset_id=dataset.id, created_by=dataset.creator)
     dataset_id = version.dataset_id
-    res = await client.get('/v1/dataset/versions', query_string={'dataset_id': dataset_id})
+    res = await client.get('/v1/dataset/versions', params={'dataset_id': dataset_id})
     assert res.status_code == 200
     assert res.json()['result'][0] == VersionResponseSchema.from_orm(version).to_payload()
 
 
-async def test_version_not_published_to_dataset_should_return_404(client, dataset_factory):
+async def test_get_version_returns_dataset_version(client, version_factory):
+    version = await version_factory.create_with_dataset()
+    res = await client.get(f'/v1/dataset/versions/{version.id}')
+    assert res.status_code == 200
+    assert res.json() == VersionResponseSchema.from_orm(version).to_payload()
+
+
+async def test_version_not_published_to_dataset_should_return_404(client, dataset_factory, authorization_header):
     dataset = await dataset_factory.create()
     dataset_id = str(dataset.id)
     payload = {'version': '2.0'}
-    res = await client.get(f'/v1/dataset/{dataset_id}/download/pre', query_string=payload)
+    res = await client.get(f'/v1/dataset/{dataset_id}/download/pre', params=payload, headers=authorization_header)
     assert res.status_code, 404
     assert res.json() == {'error': {'code': 'global.not_found', 'details': 'Requested resource is not found'}}
 
 
-async def test_version_list_should_return_200_and_download_hash_as_str(client, version_factory, dataset_factory):
+async def test_version_list_should_return_200_and_download_hash_as_str(
+    client, version_factory, dataset_factory, authorization_header
+):
     dataset = await dataset_factory.create()
     version = await version_factory.create(dataset_code=dataset.code, dataset_id=dataset.id, created_by=dataset.creator)
     dataset_id = version.dataset_id
     payload = {'version': version.version}
-    res = await client.get(f'/v1/dataset/{dataset_id}/download/pre', query_string=payload)
+    res = await client.get(f'/v1/dataset/{dataset_id}/download/pre', params=payload, headers=authorization_header)
     assert res.status_code, 200
     assert isinstance(res.json()['result']['source'], str)
 

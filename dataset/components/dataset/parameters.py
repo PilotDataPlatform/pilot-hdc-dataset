@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from fastapi import Query
@@ -27,18 +26,18 @@ class DatasetSortByFields(SortByFields):
 class DatasetFilterParameters(FilterParameters):
     """Query parameters for datasets filtering."""
 
-    code: Optional[str] = Query(default=None)
-    creator: Optional[str] = Query(default=None)
-    created_at_start: Optional[datetime] = Query(default=None)
-    created_at_end: Optional[datetime] = Query(default=None)
-    ids: Optional[str] = Query(default=None)
-    code_any: Optional[str] = Query(default=None)
-    project_id: Optional[UUID] = Query(default=None)
-    project_id_any: Optional[str] = Query(default=None)
-    or_creator: Optional[str] = Query(default=None)
+    code: str | None = Query(default=None)
+    creator: str | None = Query(default=None)
+    created_at_start: datetime | None = Query(default=None)
+    created_at_end: datetime | None = Query(default=None)
+    ids: str | None = Query(default=None)
+    code_any: str | None = Query(default=None)
+    project_id: UUID | None = Query(default=None)
+    project_id_any: str | None = Query(default=None)
+    or_creator: str | None = Query(default=None)
 
     @validator('code_any')
-    def list_split_list_parameters(cls, value: Optional[str]) -> Optional[list[str]]:
+    def list_split_list_parameters(cls, value: str | None) -> list[str] | None:
         if not value:
             return None
 
@@ -49,7 +48,7 @@ class DatasetFilterParameters(FilterParameters):
         return values
 
     @validator('ids', 'project_id_any')
-    def list_split_cast_values_to_uuid(cls, value: Optional[str]) -> Optional[list[UUID]]:
+    def list_split_cast_values_to_uuid(cls, value: str | None) -> list[UUID] | None:
         """Split ids and cast the values from str to UUID."""
 
         if not value:

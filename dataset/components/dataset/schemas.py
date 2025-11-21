@@ -83,7 +83,7 @@ class DatasetResponseSchema(DatasetSchema):
     """Default schema for single dataset in response."""
 
     id: UUID
-    project_id: UUID | None = None
+    project_id: UUID
     created_at: datetime
     updated_at: datetime
 

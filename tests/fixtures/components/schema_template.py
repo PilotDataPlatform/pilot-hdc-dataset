@@ -4,8 +4,8 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
+from collections.abc import AsyncGenerator
 from typing import Any
-from typing import Dict
 from uuid import UUID
 
 import pytest
@@ -14,10 +14,10 @@ from dataset.components import ModelList
 from dataset.components.schema_template.crud import SchemaTemplateCRUD
 from dataset.components.schema_template.models import SchemaTemplate
 from dataset.components.schema_template.schemas import SchemaTemplateCreateSchema
-from tests.fixtures.components._base_factory import BaseFactory
+from tests.fixtures.components import CRUDFactory
 
 
-class SchemaTemplateFactory(BaseFactory):
+class SchemaTemplateFactory(CRUDFactory):
     """Create schema template related entries for testing purposes."""
 
     def generate(
@@ -27,7 +27,7 @@ class SchemaTemplateFactory(BaseFactory):
         standard: str = ...,
         system_defined: bool = ...,
         is_draft: bool = ...,
-        content: Dict[str, Any] = ...,
+        content: dict[str, Any] = ...,
         dataset_id: UUID = ...,
     ) -> SchemaTemplateCreateSchema:
         if name is ...:
@@ -68,13 +68,13 @@ class SchemaTemplateFactory(BaseFactory):
         standard: str = ...,
         system_defined: bool = ...,
         is_draft: bool = ...,
-        content: Dict[str, Any] = ...,
+        content: dict[str, Any] = ...,
         dataset_id: UUID = ...,
         **kwds: Any,
     ) -> SchemaTemplate:
         entry = self.generate(name, creator, standard, system_defined, is_draft, content, dataset_id)
-        async with self.crud:
-            return await self.crud.create(entry, **kwds)
+
+        return await self.crud.create(entry, **kwds)
 
     async def bulk_create(
         self,
@@ -84,7 +84,7 @@ class SchemaTemplateFactory(BaseFactory):
         standard: str = ...,
         system_defined: bool = ...,
         is_draft: bool = ...,
-        content: Dict[str, Any] = ...,
+        content: dict[str, Any] = ...,
         dataset_id: UUID = ...,
         **kwds: Any,
     ):
@@ -107,9 +107,11 @@ class SchemaTemplateFactory(BaseFactory):
 
 @pytest.fixture
 def schema_template_crud(db_session) -> SchemaTemplateCRUD:
-    yield SchemaTemplateCRUD(db_session)
+    return SchemaTemplateCRUD(db_session)
 
 
 @pytest.fixture
-def schema_template_factory(faker, schema_template_crud) -> SchemaTemplateFactory:
-    yield SchemaTemplateFactory(faker, schema_template_crud)
+async def schema_template_factory(fake, schema_template_crud) -> AsyncGenerator[SchemaTemplateFactory]:
+    schema_template_factory = SchemaTemplateFactory(schema_template_crud, fake)
+    yield schema_template_factory
+    await schema_template_factory.truncate_table()

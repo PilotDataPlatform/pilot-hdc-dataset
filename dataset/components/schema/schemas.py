@@ -6,9 +6,6 @@
 
 from datetime import datetime
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 from uuid import UUID
 
 from pydantic import Field
@@ -36,15 +33,15 @@ class POSTSchema(BaseSchema):
 class POSTSchemaList(BaseSchema):
     """Schema for POST List request."""
 
-    name: Optional[str] = None
-    dataset_id: Optional[str] = Field(alias='dataset_geid', default=None)
-    schema_template_id: Optional[str] = Field(alias='tpl_geid', default=None)
-    standard: Optional[str] = None
-    system_defined: Optional[bool] = None
-    is_draft: Optional[bool] = None
-    create_timestamp: Optional[float] = None
-    update_timestamp: Optional[float] = None
-    creator: Optional[str] = None
+    name: str | None = None
+    dataset_id: str | None = Field(alias='dataset_geid', default=None)
+    schema_template_id: str | None = Field(alias='tpl_geid', default=None)
+    standard: str | None = None
+    system_defined: bool | None = None
+    is_draft: bool | None = None
+    create_timestamp: float | None = None
+    update_timestamp: float | None = None
+    creator: str | None = None
 
     class Config:
         allow_population_by_field_name = True
@@ -61,7 +58,7 @@ class PUTSchema(POSTSchema):
     is_draft: bool = None
     content: dict = None
     creator: str = None
-    activity: List[ActivitySchema]
+    activity: list[ActivitySchema]
     username: str
 
     class Config:
@@ -73,7 +70,7 @@ class DELETESchema(BaseSchema):
 
     dataset_id: str = Field(alias='dataset_geid')
     username: str
-    activity: List[ActivitySchema]
+    activity: list[ActivitySchema]
 
     class Config:
         allow_population_by_field_name = True
@@ -82,14 +79,14 @@ class DELETESchema(BaseSchema):
 class UpdateSchema(BaseSchema):
     """Schema for update SchemaDatase model."""
 
-    name: Optional[str] = None
-    dataset_id: Optional[str] = None
-    schema_template_id: Optional[str] = None
-    standard: Optional[str] = None
-    system_defined: Optional[bool] = None
-    is_draft: Optional[bool] = None
-    content: Optional[Dict[str, Any]] = None
-    creator: Optional[str] = None
+    name: str | None = None
+    dataset_id: str | None = None
+    schema_template_id: str | None = None
+    standard: str | None = None
+    system_defined: bool | None = None
+    is_draft: bool | None = None
+    content: dict[str, Any] | None = None
+    creator: str | None = None
 
 
 class SchemaResponse(BaseSchema):
@@ -115,10 +112,10 @@ class SchemaResponse(BaseSchema):
 class LegacySchemaResponse(BaseSchema):
     """Legacy schema for single schema in response."""
 
-    result: Optional[SchemaResponse] = None
+    result: SchemaResponse | None = None
 
 
 class LegacySchemaListResponse(BaseSchema):
     """Legacy schema for multiple schemas in response."""
 
-    result: Optional[List[SchemaResponse]] = None
+    result: list[SchemaResponse] | None = None

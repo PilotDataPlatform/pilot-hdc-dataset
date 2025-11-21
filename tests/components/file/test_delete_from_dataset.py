@@ -13,8 +13,6 @@ from common.object_storage_adaptor.boto3_client import Boto3Client
 from dataset.components.file.activity_log import FileActivityLogService
 from dataset.components.file.schemas import ItemStatusSchema
 
-pytestmark = pytest.mark.asyncio
-
 
 @pytest.fixture
 async def external_requests(httpx_mock):
@@ -109,7 +107,9 @@ async def test_file_delete_from_dataset_when_file_should_start_background_task_a
     )
 
     payload = {'source_list': [file_id], 'operator': 'admin'}
-    res = await client.delete(f'/v1/dataset/{dataset_geid}/files', json=payload, headers=authorization_header)
+    res = await client.request(
+        'DELETE', f'/v1/dataset/{dataset_geid}/files', json=payload, headers=authorization_header
+    )
 
     assert res.status_code == 200
     processing_file = [x.get('id') for x in res.json().get('result').get('processing')]
@@ -217,7 +217,9 @@ async def test_file_delete_from_dataset_when_folder_should_start_background_task
         match_content=json.dumps(succeed_stream_task_payload).encode(),
     )
     payload = {'source_list': [folder_id], 'operator': 'admin'}
-    res = await client.delete(f'/v1/dataset/{dataset_geid}/files', json=payload, headers=authorization_header)
+    res = await client.request(
+        'DELETE', f'/v1/dataset/{dataset_geid}/files', json=payload, headers=authorization_header
+    )
 
     assert res.status_code == 200
     processing_file = [x.get('id') for x in res.json().get('result').get('processing')]
@@ -291,7 +293,9 @@ async def test_file_delete_from_dataset_when_folder_is_duplicate_should_start_ba
         json={},
     )
     payload = {'source_list': [folder_id, folder_id], 'operator': 'admin'}
-    res = await client.delete(f'/v1/dataset/{dataset_geid}/files', json=payload, headers=authorization_header)
+    res = await client.request(
+        'DELETE', f'/v1/dataset/{dataset_geid}/files', json=payload, headers=authorization_header
+    )
 
     assert res.status_code == 200
     assert res.json().get('result').get('processing')[1]['feedback'] == 'duplicate in same batch, update the name'
@@ -314,7 +318,9 @@ async def test_delete_from_not_in_dataset_should_not_reaise_error(
     )
 
     payload = {'source_list': [file_geid], 'operator': 'admin'}
-    res = await client.delete(f'/v1/dataset/{dataset_geid}/files', json=payload, headers=authorization_header)
+    res = await client.request(
+        'DELETE', f'/v1/dataset/{dataset_geid}/files', json=payload, headers=authorization_header
+    )
     assert res.status_code == 200
     ignored_file = [x.get('id') for x in res.json().get('result').get('ignored')]
     assert ignored_file == [file_geid]

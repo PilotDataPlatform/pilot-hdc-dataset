@@ -15,7 +15,7 @@ from testcontainers.core.container import DockerContainer
 
 from dataset.config import get_settings
 
-MINIO_DOCKER_IMAGE = 'minio/minio:RELEASE.2022-05-03T20-36-08Z'
+MINIO_DOCKER_IMAGE = 'docker-registry.ebrains.eu/hdc-services-external/minio:RELEASE.2022-05-03T20-36-08Z'
 settings = get_settings()
 
 

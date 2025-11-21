@@ -5,19 +5,21 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import Dict
-from typing import List
 from uuid import UUID
+
+from fastapi import Depends
 
 from dataset.components.activity_log.file_folder_activity_log import BaseFileFolderActivityLog
 from dataset.components.activity_log.schemas import FileFolderActivityLogSchema
+from dataset.dependencies.kafka import KafkaProducerClient
+from dataset.dependencies.kafka import get_kafka_client
 
 
 class FileActivityLogService(BaseFileFolderActivityLog):
     """Class for managing the file event send to the msg broker."""
 
-    async def send_on_import_event(self, dataset_code: str, project_code: str, imported_list: List[str], user: str):
-        """send file imported msg to msg broker."""
+    async def send_on_import_event(self, dataset_code: str, project_code: str, imported_list: list[str], user: str):
+        """Send file imported msg to msg broker."""
 
         for item in imported_list:
             log_schema = FileFolderActivityLogSchema(
@@ -31,8 +33,8 @@ class FileActivityLogService(BaseFileFolderActivityLog):
             )
             await self._message_send(log_schema.dict())
 
-    async def send_on_delete_event(self, dataset_code: str, source_list: List[str], user: str):
-        """send file delete msg to msg broker."""
+    async def send_on_delete_event(self, dataset_code: str, source_list: list[str], user: str):
+        """Send file delete msg to msg broker."""
 
         for item in source_list:
             log_schema = FileFolderActivityLogSchema(
@@ -47,9 +49,9 @@ class FileActivityLogService(BaseFileFolderActivityLog):
             await self._message_send(log_schema.dict())
 
     async def send_on_move_event(
-        self, dataset_code: str, item: Dict[str, Any], user: str, old_path: str, new_path: str
+        self, dataset_code: str, item: dict[str, Any], user: str, old_path: str, new_path: str
     ):
-        """send file move msg to msg broker."""
+        """Send file move msg to msg broker."""
 
         # even thought the event is UPDATE there is no update in metadata service.
         # as of today, when one item is moved, the item is deleted and a new one is created in the new path.
@@ -65,8 +67,8 @@ class FileActivityLogService(BaseFileFolderActivityLog):
         )
         await self._message_send(log_schema.dict())
 
-    async def send_on_rename_event(self, dataset_code: str, source_list: List[str], user: str, new_name: str):
-        """send file rename msg to msg broker."""
+    async def send_on_rename_event(self, dataset_code: str, source_list: list[str], user: str, new_name: str):
+        """Send file rename msg to msg broker."""
 
         # even thought the event is UPDATE there is no update in metadata service.
         # as of today, when one item is moved, the item is deleted and a new one is created in the new name.
@@ -82,3 +84,11 @@ class FileActivityLogService(BaseFileFolderActivityLog):
                 changes=[{'item_property': 'name', 'old_value': item['name'], 'new_value': new_name}],
             )
             await self._message_send(log_schema.dict())
+
+
+def get_file_activity_log_service(
+    kafka_producer_client: KafkaProducerClient = Depends(get_kafka_client),
+) -> FileActivityLogService:
+    """Return an instance of FileActivityLogService as a dependency."""
+
+    return FileActivityLogService(kafka_producer_client=kafka_producer_client)

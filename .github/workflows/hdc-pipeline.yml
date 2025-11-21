@@ -1,0 +1,39 @@
+name: HDC ci/cd pipeline
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run_tests_hdc:
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/run_tests.yml@main
+    with:
+      min_coverage_percent: 95
+      coverage_target: "dataset"
+      python_version: "3.10.14"
+      docker_login: true
+    secrets: inherit
+
+  build_and_publish_hdc:
+    needs: [run_tests_hdc]
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/build_and_publish.yml@main
+    with:
+      matrix_config: '["alembic","dataset"]'
+      service_name: 'dataset'
+    secrets: inherit
+
+  deploy_hdc:
+    needs: [build_and_publish_hdc]
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/trigger_deployment.yml@main
+    with:
+      hdc_service_name: 'dataset'
+    secrets: inherit

@@ -4,8 +4,8 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from aioredis import Redis
 from fastapi import Depends
+from redis.asyncio import Redis
 
 from dataset.config import get_settings
 

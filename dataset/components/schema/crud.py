@@ -4,8 +4,6 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import List
-
 from sqlalchemy import select
 from sqlalchemy.orm import contains_eager
 from sqlalchemy.sql import Select
@@ -40,7 +38,7 @@ class SchemaCRUD(CRUD):
 
         return select(self.model).outerjoin(Dataset).options(contains_eager(self.model.dataset))
 
-    async def get_schema_list(self, request_payload: POSTSchemaList) -> List[SchemaResponse]:
+    async def get_schema_list(self, request_payload: POSTSchemaList) -> list[SchemaResponse]:
         """Get List of Schemas with the essential schema on top."""
         filter_allowed = [
             'name',

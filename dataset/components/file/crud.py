@@ -8,10 +8,6 @@ import csv
 import json
 from io import StringIO
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 from starlette.concurrency import run_in_threadpool
 
@@ -57,7 +53,7 @@ class FileCRUD:
             content = content[: content[:-1].rfind('\n')]
         return content
 
-    def _parse_location(self, path: str) -> Dict[str, str]:
+    def _parse_location(self, path: str) -> dict[str, str]:
         """Return bucket and object key content from csv file."""
 
         minio_path = path.split('//')[-1]
@@ -76,7 +72,7 @@ class FileCRUD:
                 logger.error('fail to parse the json')
         return body
 
-    async def _get_file_metadata(self, file_id: str) -> Dict[str, Any]:
+    async def _get_file_metadata(self, file_id: str) -> dict[str, Any]:
         """Return file metadata: bucket, path, path and size."""
 
         file_metadata = await self.metadata_service.get_by_id(file_id)
@@ -109,11 +105,11 @@ class FileCRUD:
     async def create(
         self,
         dataset: Dataset,
-        file: Dict[str, Any],
+        file: dict[str, Any],
         owner: str,
-        parent: Dict[str, Any],
-        new_name: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        parent: dict[str, Any],
+        new_name: str | None = None,
+    ) -> dict[str, Any]:
         """Add file to dataset."""
 
         # generate minio object path
@@ -166,7 +162,7 @@ class FileCRUD:
 
         return folder_node
 
-    async def delete(self, file: Dict[str, Any]) -> None:
+    async def delete(self, file: dict[str, Any]) -> None:
         """Delete file from dataset."""
         await self.metadata_service.delete_object(file.get('id'))
         try:
@@ -181,9 +177,9 @@ class FileCRUD:
             raise e
 
     async def validate_files_folders(
-        self, file_id_list: List[Dict[str, Any]], code: str, items_type: str = 'dataset'
-    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-        """walk thought the list and validate if the file is from correct root."""
+        self, file_id_list: list[dict[str, Any]], code: str, items_type: str = 'dataset'
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Walk thought the list and validate if the file is from correct root."""
 
         passed_file = []
         not_passed_file = []
@@ -250,9 +246,9 @@ class FileCRUD:
         return passed_file, not_passed_file
 
     async def remove_duplicate_file(
-        self, files_list: List[Dict[str, Any]], dataset_code: str
-    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-        """mark duplicated files in dataset."""
+        self, files_list: list[dict[str, Any]], dataset_code: str
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Mark duplicated files in dataset."""
 
         dataset_objects = await self.metadata_service.get_objects(dataset_code)
         duplic_file = []
@@ -272,7 +268,7 @@ class FileCRUD:
 
         return duplic_file, not_duplic_file
 
-    async def validate_files_target_folder(self, target_id: str, dataset_code: str) -> Dict[str, Any]:
+    async def validate_files_target_folder(self, target_id: str, dataset_code: str) -> dict[str, Any]:
         """Validate existence of a file(s) target folder."""
         target_folder = await self.metadata_service.get_by_id(target_id)
         if not target_folder:

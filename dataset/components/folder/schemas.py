@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 from pydantic import constr
@@ -19,15 +18,15 @@ FOLDER_NAME_REGEX = r'^[^\\\/:?\*<>|"]+$'
 class StorageSchema(BaseSchema):
     """Base storage schema."""
 
-    location_uri: Optional[str] = None
+    location_uri: str | None = None
 
 
 class FolderResponseSchema(BaseSchema):
     """Base folder schema."""
 
     id: str
-    parent: Optional[str] = None
-    parent_path: Optional[str] = None
+    parent: str | None = None
+    parent_path: str | None = None
     status: ItemStatusSchema
     type: str
     name: str
@@ -37,7 +36,7 @@ class FolderResponseSchema(BaseSchema):
     container_type: str
     created_time: datetime
     last_updated_time: datetime
-    storage: Optional[StorageSchema] = None
+    storage: StorageSchema | None = None
 
 
 class FolderCreateSchema(BaseModel):
@@ -56,10 +55,10 @@ class LegacyFolderResponseSchema(BaseSchema):
 
 
 class FolderMetadataCreateSchema(BaseSchema):
-    """schema to create metadata folder."""
+    """Schema to create metadata folder."""
 
-    parent: Optional[str] = None
-    parent_path: Optional[str] = None
+    parent: str | None = None
+    parent_path: str | None = None
     type: str = 'folder'
     name: str
     owner: str
@@ -69,7 +68,7 @@ class FolderMetadataCreateSchema(BaseSchema):
 
 
 class FileMetadataCreateSchema(FolderMetadataCreateSchema):
-    """schema to create metadata file."""
+    """Schema to create metadata file."""
 
-    location_uri: Optional[str] = None
+    location_uri: str | None = None
     size: int = 0

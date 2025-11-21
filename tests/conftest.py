@@ -12,13 +12,12 @@ environ['METADATA_SERVICE'] = 'http://METADATA_SERVICE'
 environ['PROJECT_SERVICE'] = 'http://PROJECT_SERVICE'
 environ['ROOT_PATH'] = './tests/'
 environ['S3_INTERNAL'] = 'MINIO_ENDPOINT'
-environ['OPEN_TELEMETRY_ENABLED'] = 'True'
-environ['REDIS_PASSWORD'] = 'auth'
 
 pytest_plugins = [
     'tests.fixtures.services.base',
     'tests.fixtures.services.metadata',
     'tests.fixtures.db',
+    'tests.fixtures.fake',
     'tests.fixtures.kafka',
     'tests.fixtures.redis',
     'tests.fixtures.policy',
@@ -30,4 +29,5 @@ pytest_plugins = [
     'tests.fixtures.components.schema',
     'tests.fixtures.components.version',
     'tests.fixtures.components.bids_result',
+    'tests.fixtures.components.version_sharing',
 ]
