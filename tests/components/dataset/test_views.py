@@ -8,11 +8,13 @@ import random
 from datetime import datetime
 from datetime import timedelta
 from itertools import islice
+from unittest import mock
 from uuid import UUID
 
 import pytest
 
 from dataset.components import ModelList
+from dataset.components.dataset.activity_log import DatasetActivityLog
 from dataset.components.dataset.parameters import DatasetSortByFields
 from dataset.components.sorting import SortingOrder
 
@@ -269,3 +271,74 @@ class TestDatasetViews:
 
         assert received_ids == {creator_1_dataset.id, *creator_2_datasets_ids}
         assert received_total == 3
+
+
+@mock.patch.object(DatasetActivityLog, 'send_dataset_on_create_event')
+async def test_delete_dataset_by_id(
+    mock_dataset_activity_log,
+    client,
+    dataset_factory,
+    minio_container,
+    minio_client,
+    s3_test_client,
+    schema_template_factory,
+    settings,
+):
+    await schema_template_factory.truncate_table()
+    await schema_template_factory.create(name=settings.ESSENTIALS_TEMPLATE_NAME, system_defined=True, dataset_id=None)
+    dataset = dataset_factory.generate(
+        creator='amyguindoc14',
+        title='123',
+        authors=['123'],
+        type_='GENERAL',
+        description='123',
+        code='datasetcode123123',
+        tags=[r'{!@#$%^&*()_{}:\?><'],
+        modality=['anatomical approach'],
+    )
+    payload = dataset.to_payload()
+    create_response = await client.post('/v1/datasets/', json=payload)
+    assert create_response.status_code == 200
+    dataset = create_response.json()
+    dataset_id = dataset['id']
+    delete_response = await client.delete(f'/v1/datasets/{dataset_id}')
+    assert delete_response.status_code == 200
+    assert delete_response.json() == {'detail': 'Dataset deleted successfully.'}
+
+
+@mock.patch.object(DatasetActivityLog, 'send_dataset_on_create_event')
+async def test_delete_dataset_by_code(
+    mock_dataset_activity_log,
+    client,
+    dataset_factory,
+    minio_container,
+    minio_client,
+    s3_test_client,
+    schema_template_factory,
+    settings,
+):
+    await schema_template_factory.truncate_table()
+    await schema_template_factory.create(name=settings.ESSENTIALS_TEMPLATE_NAME, system_defined=True, dataset_id=None)
+    dataset = dataset_factory.generate(
+        creator='amyguindoc14',
+        title='123',
+        authors=['123'],
+        type_='GENERAL',
+        description='123',
+        code='datasetcode2342',
+        tags=[r'{!@#$%^&*()_{}:\?><'],
+        modality=['anatomical approach'],
+    )
+    payload = dataset.to_payload()
+    create_response = await client.post('/v1/datasets/', json=payload)
+    assert create_response.status_code == 200
+    dataset = create_response.json()
+    dataset_code = dataset['code']
+    delete_response = await client.delete(f'/v1/datasets/{dataset_code}')
+    assert delete_response.status_code == 200
+    assert delete_response.json() == {'detail': 'Dataset deleted successfully.'}
+
+
+async def test_delete_dataset_not_found(client):
+    response = await client.delete('/v1/datasets/nonexistent')
+    assert response.status_code == 404

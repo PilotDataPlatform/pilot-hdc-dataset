@@ -95,3 +95,17 @@ async def list_datasets(
     response = DatasetListResponseSchema.from_page(page)
 
     return response
+
+
+@router.delete('/{dataset_id}', summary='Delete a dataset by id or code.', response_model=None)
+async def delete_dataset(
+    dataset_id: UUID | str,
+    dataset_crud: DatasetCRUD = Depends(get_dataset_crud),
+    object_storage_manager: ObjectStorageManager = Depends(get_object_storage_manager),
+):
+    """Delete a dataset by id or code."""
+    async with dataset_crud:
+        dataset = await dataset_crud.retrieve_by_id_or_code(dataset_id)
+        await dataset_crud.delete(dataset.id)
+    await object_storage_manager.remove_bucket(bucket_name=dataset.code)
+    return {'detail': 'Dataset deleted successfully.'}
