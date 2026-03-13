@@ -18,6 +18,7 @@ from dataset.components.dataset.exceptions import DatasetCodeConflict
 from dataset.components.dataset.object_storage_manager import ObjectStorageManager
 from dataset.components.dataset.parameters import DatasetFilterParameters
 from dataset.components.dataset.parameters import DatasetSortByFields
+from dataset.components.dataset.schemas import DatasetDeleteResponse
 from dataset.components.dataset.schemas import DatasetListResponseSchema
 from dataset.components.dataset.schemas import DatasetResponseSchema
 from dataset.components.dataset.schemas import DatasetSchema
@@ -95,3 +96,18 @@ async def list_datasets(
     response = DatasetListResponseSchema.from_page(page)
 
     return response
+
+
+@router.delete('/{dataset_id}', summary='Delete a dataset by id or code.', response_model=DatasetDeleteResponse)
+async def delete_dataset(
+    dataset_id: UUID | str,
+    dataset_crud: DatasetCRUD = Depends(get_dataset_crud),
+    object_storage_manager: ObjectStorageManager = Depends(get_object_storage_manager),
+):
+    """Delete a dataset by id or code."""
+    async with dataset_crud:
+        dataset = await dataset_crud.retrieve_by_id_or_code(dataset_id)
+        await dataset_crud.delete(dataset.id)
+        # Only delete the bucket after the dataset is deleted in the DB
+        await object_storage_manager.remove_bucket(bucket_name=dataset.code)
+    return DatasetDeleteResponse(detail='Dataset deleted successfully.')

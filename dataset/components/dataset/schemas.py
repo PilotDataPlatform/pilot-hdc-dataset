@@ -95,3 +95,7 @@ class DatasetListResponseSchema(ListResponseSchema):
     """Default schema for multiple datasets in response."""
 
     result: list[DatasetResponseSchema]
+
+
+class DatasetDeleteResponse(BaseSchema):
+    detail: str
