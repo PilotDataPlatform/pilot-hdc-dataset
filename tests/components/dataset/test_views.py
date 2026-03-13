@@ -301,9 +301,15 @@ async def test_delete_dataset_by_id(
     assert create_response.status_code == 200
     dataset = create_response.json()
     dataset_id = dataset['id']
+    dataset_code = dataset['code']
     delete_response = await client.delete(f'/v1/datasets/{dataset_id}')
     assert delete_response.status_code == 200
     assert delete_response.json() == {'detail': 'Dataset deleted successfully.'}
+    # Assert dataset is removed
+    get_response = await client.get(f'/v1/datasets/{dataset_id}')
+    assert get_response.status_code == 404
+    # Assert bucket is removed
+    assert not s3_test_client.check_if_bucket_exists(dataset_code)
 
 
 @mock.patch.object(DatasetActivityLog, 'send_dataset_on_create_event')
@@ -333,10 +339,16 @@ async def test_delete_dataset_by_code(
     create_response = await client.post('/v1/datasets/', json=payload)
     assert create_response.status_code == 200
     dataset = create_response.json()
+    dataset_id = dataset['id']
     dataset_code = dataset['code']
     delete_response = await client.delete(f'/v1/datasets/{dataset_code}')
     assert delete_response.status_code == 200
     assert delete_response.json() == {'detail': 'Dataset deleted successfully.'}
+    # Assert dataset is removed
+    get_response = await client.get(f'/v1/datasets/{dataset_id}')
+    assert get_response.status_code == 404
+    # Assert bucket is removed
+    assert not s3_test_client.check_if_bucket_exists(dataset_code)
 
 
 async def test_delete_dataset_not_found(client):
