@@ -26,6 +26,8 @@ from dataset.components.file.schemas import LegacyFileResponse
 from dataset.components.file.tasks import FileOperationTasks
 from dataset.components.folder.crud import FolderCRUD
 from dataset.components.folder.dependencies import get_folder_crud
+from dataset.components.request.network import Network
+from dataset.components.version.views import get_network
 from dataset.dependencies.services import get_project_service
 from dataset.logger import logger
 from dataset.services import ProjectService
@@ -47,6 +49,7 @@ async def import_dataset(
     file_crud: FileCRUD = Depends(get_file_crud),
     project_service: ProjectService = Depends(get_project_service),
     Session_ID: str | None = Header(None),
+    network: Network = Depends(get_network),
 ) -> LegacyFileResponse:
     """API imports file list from project to dataset."""
     logger.info('IMPORT FILES: begin endpoint')
@@ -79,6 +82,7 @@ async def import_dataset(
             oper,
             project['code'],
             Session_ID,
+            network,
         )
 
     logger.info('IMPORT FILES: added copy_files_worker')
@@ -96,6 +100,7 @@ async def delete_files(
     file_taks: FileOperationTasks = Depends(),
     file_crud: FileCRUD = Depends(get_file_crud),
     Session_ID: str | None = Header(None),
+    network: Network = Depends(get_network),
 ) -> LegacyFileResponse:
     """API deletes file by id within Dataset."""
 
@@ -111,6 +116,7 @@ async def delete_files(
             dataset_obj,
             request_payload.operator,
             Session_ID,
+            network,
         )
 
     return LegacyFileResponse(result={'processing': delete_list, 'ignored': wrong_file})

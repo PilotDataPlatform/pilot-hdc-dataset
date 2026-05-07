@@ -21,6 +21,7 @@ from dataset.components.file.types import EActionType
 from dataset.components.file.types import EFileStatus
 from dataset.components.folder.crud import FolderCRUD
 from dataset.components.folder.dependencies import get_folder_crud
+from dataset.components.request.network import Network
 from dataset.components.schemas import BaseSchema
 from dataset.config import get_settings
 from dataset.logger import logger
@@ -192,6 +193,7 @@ class FileOperationTasks:
         oper: str,
         project_code: str,
         session_id: str,
+        network: Network,
     ) -> None:
         """Background task responsible to add list of files/folders from dataset."""
 
@@ -218,7 +220,9 @@ class FileOperationTasks:
             await dataset_crud.commit()
             logger.info(f'dataset {dataset.code}: {num_of_files} files added, old total {dataset.total_files}')
 
-            await self.file_act_notifier.send_on_import_event(dataset.code, project_code, import_list, oper)
+            await self.file_act_notifier.send_on_import_event(
+                dataset.code, project_code, import_list, oper, network.origin
+            )
         except Exception as e:
             logger.exception(f'{e}')
             for ff_object in import_list:
@@ -312,7 +316,13 @@ class FileOperationTasks:
         return
 
     async def delete_files_work(
-        self, dataset_crud: DatasetCRUD, delete_list: list[dict[str, Any]], dataset: Dataset, oper: str, session_id: str
+        self,
+        dataset_crud: DatasetCRUD,
+        delete_list: list[dict[str, Any]],
+        dataset: Dataset,
+        oper: str,
+        session_id: str,
+        network: Network,
     ) -> None:
         """Background task responsible to remove list of files/folders from dataset."""
         deleted_files = []
@@ -355,7 +365,7 @@ class FileOperationTasks:
             await dataset_crud.update(dataset.id, BaseSchema(), **update_attribute)
             await dataset_crud.commit()
             logger.info(f'dataset {dataset.code} : {num_of_files} files removed, old total {dataset.total_files}')
-            await self.file_act_notifier.send_on_delete_event(dataset.code, delete_list, oper)
+            await self.file_act_notifier.send_on_delete_event(dataset.code, delete_list, oper, network.origin)
 
         except Exception as e:
             logger.exception(f'{e}')
