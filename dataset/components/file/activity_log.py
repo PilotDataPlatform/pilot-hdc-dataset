@@ -18,7 +18,9 @@ from dataset.dependencies.kafka import get_kafka_client
 class FileActivityLogService(BaseFileFolderActivityLog):
     """Class for managing the file event send to the msg broker."""
 
-    async def send_on_import_event(self, dataset_code: str, project_code: str, imported_list: list[str], user: str):
+    async def send_on_import_event(
+        self, dataset_code: str, project_code: str, imported_list: list[str], user: str, network_origin: str = 'unknown'
+    ):
         """Send file imported msg to msg broker."""
 
         for item in imported_list:
@@ -30,10 +32,13 @@ class FileActivityLogService(BaseFileFolderActivityLog):
                 item_type=item['type'],
                 item_name=item['name'],
                 imported_from=project_code,
+                network_origin=network_origin,
             )
             await self._message_send(log_schema.dict())
 
-    async def send_on_delete_event(self, dataset_code: str, source_list: list[str], user: str):
+    async def send_on_delete_event(
+        self, dataset_code: str, source_list: list[str], user: str, network_origin: str = 'unknown'
+    ):
         """Send file delete msg to msg broker."""
 
         for item in source_list:
@@ -45,6 +50,7 @@ class FileActivityLogService(BaseFileFolderActivityLog):
                 item_id=UUID(item['id']),
                 item_type=item['type'],
                 item_name=item['name'],
+                network_origin=network_origin,
             )
             await self._message_send(log_schema.dict())
 
