@@ -18,6 +18,7 @@ from dataset.components.file.dependencies import get_locking_manager
 from dataset.components.file.schemas import ItemStatusSchema
 from dataset.components.file.tasks import FileOperationTasks
 from dataset.components.folder.dependencies import get_folder_crud
+from dataset.components.request.network import Network
 from dataset.dependencies.s3 import get_s3_client
 from dataset.services.task_stream import TaskStreamService
 
@@ -112,7 +113,7 @@ async def test_copy_file_worker_should_import_file_succeed(
         mock_recursive_copy.return_value = 1, 1, None
         try:
             await file_tasks.copy_files_worker(
-                dataset_crud, import_list, dataset, OPER, 'source_project_code', SESSION_ID
+                dataset_crud, import_list, dataset, OPER, 'source_project_code', SESSION_ID, Network(origin='internal')
             )
         except Exception as e:
             pytest.fail(f'copy_files_worker raised {e} unexpectedly')
@@ -158,7 +159,9 @@ async def test_copy_file_worker_raise_exception_should_import_file_cancelled(
         }
     ]
     try:
-        await file_tasks.copy_files_worker(dataset_crud, import_list, dataset, OPER, 'project_code', SESSION_ID)
+        await file_tasks.copy_files_worker(
+            dataset_crud, import_list, dataset, OPER, 'project_code', SESSION_ID, Network(origin='internal')
+        )
     except Exception as e:
         pytest.fail(f'copy_files_worker raised {e} unexpectedly')
     content = json.loads(httpx_mock.get_requests()[-1].content)
@@ -239,7 +242,7 @@ async def test_move_file_worker_should_move_file_succeed(  # noqa: C901
             try:
                 await file_tasks.move_file_worker(move_list, dataset, OPER, target_folder, SESSION_ID)
             except Exception as e:
-                pytest.fail(f'copy_files_worker raised {e} unexpectedly')
+                pytest.fail(f'move_file_worker raised {e} unexpectedly')
     locks = []
     unlocks = []
 
@@ -299,7 +302,9 @@ async def test_delete_files_work_should_delete_file_succeed(
     with mock.patch.object(FileOperationTasks, 'recursive_delete') as mock_recursive_delete:
         mock_recursive_delete.return_value = 1, 1
         try:
-            await file_tasks.delete_files_work(dataset_crud, delete_list, dataset, OPER, SESSION_ID)
+            await file_tasks.delete_files_work(
+                dataset_crud, delete_list, dataset, OPER, SESSION_ID, Network(origin='internal')
+            )
         except Exception as e:
             pytest.fail(f'copy_delete_work raised {e} unexpectedly')
 
@@ -333,7 +338,9 @@ async def test_delete_files_work_should_delete_folder_succeed(
     with mock.patch.object(FileOperationTasks, 'recursive_delete') as mock_recursive_delete:
         mock_recursive_delete.return_value = 1, 1
         try:
-            await file_tasks.delete_files_work(dataset_crud, delete_list, dataset, OPER, SESSION_ID)
+            await file_tasks.delete_files_work(
+                dataset_crud, delete_list, dataset, OPER, SESSION_ID, Network(origin='internal')
+            )
         except Exception as e:
             pytest.fail(f'copy_delete_work raised {e} unexpectedly')
 
@@ -370,7 +377,9 @@ async def test_delete_files_work_when_exception_raised_should_delete_folder_canc
     ]
 
     try:
-        await file_tasks.delete_files_work(dataset_crud, delete_list, dataset, OPER, SESSION_ID)
+        await file_tasks.delete_files_work(
+            dataset_crud, delete_list, dataset, OPER, SESSION_ID, Network(origin='internal')
+        )
     except Exception as e:
         pytest.fail(f'copy_delete_work raised {e} unexpectedly')
 

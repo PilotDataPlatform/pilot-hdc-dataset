@@ -114,7 +114,7 @@ async def test_file_delete_from_dataset_when_file_should_start_background_task_a
     assert res.status_code == 200
     processing_file = [x.get('id') for x in res.json().get('result').get('processing')]
     assert processing_file == [file_id]
-    mock_send_on_delete_event.assert_called_with(dataset.code, [{**file_dict, 'feedback': 'exist'}], 'admin')
+    mock_send_on_delete_event.assert_called_with(dataset.code, [{**file_dict, 'feedback': 'exist'}], 'admin', 'unknown')
 
 
 @mock.patch.object(Boto3Client, 'delete_object')
@@ -224,7 +224,9 @@ async def test_file_delete_from_dataset_when_folder_should_start_background_task
     assert res.status_code == 200
     processing_file = [x.get('id') for x in res.json().get('result').get('processing')]
     assert processing_file == [folder_id]
-    mock_send_on_delete_event.assert_called_with(dataset.code, [{**folder_dict, 'feedback': 'exist'}], 'admin')
+    mock_send_on_delete_event.assert_called_with(
+        dataset.code, [{**folder_dict, 'feedback': 'exist'}], 'admin', 'unknown'
+    )
 
 
 @mock.patch.object(Boto3Client, 'delete_object')
