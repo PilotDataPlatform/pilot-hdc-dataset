@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dataset"
-version = "2.3.42"
+version = "2.3.43"
 description = ""
 authors = ["Indoc Research"]
 
